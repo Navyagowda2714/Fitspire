@@ -1,2 +1,2 @@
-# CH-7-Champagne
-AI-Fitness IOS app
+# AI-powered iOS fitness coaching app
+
