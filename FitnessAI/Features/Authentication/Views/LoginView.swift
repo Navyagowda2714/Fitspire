@@ -14,8 +14,7 @@ struct LoginView: View {
     var body: some View {
         VStack(spacing: 0) {
 
-            // Header
-            VStack(spacing: 8) {
+            VStack(spacing: 12) {
                 Spacer()
                 ZStack {
                     RoundedRectangle(cornerRadius: 20)
@@ -36,11 +35,9 @@ struct LoginView: View {
             .frame(height: 280)
             .background(Color(hex: "7F77DD").opacity(0.08))
 
-            // Sign in options
             VStack(spacing: 12) {
                 Spacer(minLength: 24)
 
-                // Sign in with Apple
                 SignInWithAppleButton(.signIn) { request in
                     request.requestedScopes = [.fullName, .email]
                 } onCompletion: { result in
@@ -50,7 +47,6 @@ struct LoginView: View {
                 .frame(height: 52)
                 .clipShape(RoundedRectangle(cornerRadius: 14))
 
-                // Face ID / Touch ID
                 Button {
                     Task {
                         await viewModel.signInWithBiometrics(appState: appState)

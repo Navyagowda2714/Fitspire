@@ -11,7 +11,6 @@ import LocalAuthentication
 @MainActor
 final class AuthService: ObservableObject {
 
-    // Sign in with Apple
     func handleSignInWithApple(_ result: Result<ASAuthorization, Error>) -> Bool {
         switch result {
         case .success(let auth):
@@ -26,11 +25,9 @@ final class AuthService: ObservableObject {
         }
     }
 
-    // Face ID / Touch ID
     func authenticateWithBiometrics() async -> Bool {
         let context = LAContext()
         var error: NSError?
-
         guard context.canEvaluatePolicy(
             .deviceOwnerAuthenticationWithBiometrics,
             error: &error
@@ -46,7 +43,6 @@ final class AuthService: ObservableObject {
         }
     }
 
-    // Check if returning user has Apple ID stored
     func hasStoredAppleID() -> Bool {
         UserDefaults.standard.string(forKey: "appleUserID") != nil
     }

@@ -7,7 +7,6 @@
 
 import SwiftUI
 
-// Hex color support
 extension Color {
     init(hex: String) {
         let hex = hex.trimmingCharacters(in: .alphanumerics.inverted)
@@ -20,7 +19,6 @@ extension Color {
     }
 }
 
-// Reusable input field modifier
 extension View {
     func inputFieldStyle() -> some View {
         self.modifier(InputFieldModifier())

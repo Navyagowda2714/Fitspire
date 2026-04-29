@@ -4,7 +4,6 @@
 //
 //  Created by Navyashree Byregowda on 28/04/2026.
 //
-
 import SwiftUI
 
 struct OnboardingPageView: View {
@@ -13,8 +12,6 @@ struct OnboardingPageView: View {
     var body: some View {
         VStack(spacing: 0) {
             Spacer()
-
-            // Icon
             ZStack {
                 RoundedRectangle(cornerRadius: 24)
                     .fill(Color(hex: "EEEDFE"))
@@ -25,13 +22,11 @@ struct OnboardingPageView: View {
             }
             .padding(.bottom, 28)
 
-            // Title
             Text(page.title)
                 .font(.system(size: 22, weight: .medium))
                 .multilineTextAlignment(.center)
                 .padding(.bottom, 10)
 
-            // Description
             Text(page.description)
                 .font(.system(size: 15))
                 .foregroundStyle(.secondary)
@@ -39,7 +34,6 @@ struct OnboardingPageView: View {
                 .padding(.horizontal, 32)
                 .padding(.bottom, 28)
 
-            // Bullets
             VStack(alignment: .leading, spacing: 10) {
                 ForEach(page.bullets, id: \.self) { bullet in
                     HStack(spacing: 12) {
@@ -53,7 +47,6 @@ struct OnboardingPageView: View {
                 }
             }
             .padding(.horizontal, 40)
-
             Spacer()
         }
     }

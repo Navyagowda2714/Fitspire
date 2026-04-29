@@ -20,9 +20,7 @@ final class AuthViewModel: ObservableObject {
     ) {
         isLoading = true
         errorMessage = nil
-
         let success = authService.handleSignInWithApple(result)
-
         if success {
             appState.markAuthenticated()
         } else {
@@ -34,18 +32,12 @@ final class AuthViewModel: ObservableObject {
     func signInWithBiometrics(appState: AppState) async {
         isLoading = true
         errorMessage = nil
-
         let success = await authService.authenticateWithBiometrics()
-
         if success {
             appState.markAuthenticated()
         } else {
             errorMessage = "Biometric authentication failed."
         }
         isLoading = false
-    }
-
-    func hasStoredAppleID() -> Bool {
-        authService.hasStoredAppleID()
     }
 }

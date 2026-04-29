@@ -8,6 +8,15 @@ import Foundation
 import AVFoundation
 import UserNotifications
 
+struct PermissionItem: Identifiable {
+    let id = UUID()
+    let title: String
+    let subtitle: String
+    let icon: String
+    let color: String
+    var isGranted: Bool = false
+}
+
 @MainActor
 final class PermissionsViewModel: ObservableObject {
     @Published var permissions: [PermissionItem] = []
@@ -15,24 +24,9 @@ final class PermissionsViewModel: ObservableObject {
 
     init() {
         permissions = [
-            PermissionItem(
-                title: "Camera",
-                subtitle: "For real-time pose detection",
-                icon: "camera.viewfinder",
-                color: "534AB7"
-            ),
-            PermissionItem(
-                title: "Notifications",
-                subtitle: "Workout reminders and alerts",
-                icon: "bell.badge",
-                color: "1D9E75"
-            ),
-            PermissionItem(
-                title: "HealthKit",
-                subtitle: "Read and save workout data",
-                icon: "heart.text.square",
-                color: "D85A30"
-            )
+            PermissionItem(title: "Camera", subtitle: "For real-time pose detection", icon: "camera.viewfinder", color: "534AB7"),
+            PermissionItem(title: "Notifications", subtitle: "Workout reminders and alerts", icon: "bell.badge", color: "1D9E75"),
+            PermissionItem(title: "HealthKit", subtitle: "Read and save workout data", icon: "heart.text.square", color: "D85A30")
         ]
     }
 
@@ -49,9 +43,7 @@ final class PermissionsViewModel: ObservableObject {
 
     private func requestNotifications() async {
         let center = UNUserNotificationCenter.current()
-        let granted = (try? await center.requestAuthorization(
-            options: [.alert, .sound, .badge]
-        )) ?? false
+        let granted = (try? await center.requestAuthorization(options: [.alert, .sound, .badge])) ?? false
         updatePermission(title: "Notifications", granted: granted)
     }
 
@@ -60,13 +52,4 @@ final class PermissionsViewModel: ObservableObject {
             permissions[index].isGranted = granted
         }
     }
-}
-
-struct PermissionItem: Identifiable {
-    let id = UUID()
-    let title: String
-    let subtitle: String
-    let icon: String
-    let color: String
-    var isGranted: Bool = false
 }
