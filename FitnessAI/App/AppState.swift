@@ -6,11 +6,13 @@
 //
 import Foundation
 import SwiftUI
+import Combine
 
 @MainActor
 final class AppState: ObservableObject {
     @Published var isAuthenticated: Bool = false
     @Published var hasCompletedOnboarding: Bool = false
+    @Published var hasCompletedBodyScan: Bool = false
     @Published var hasCompletedProfile: Bool = false
     @Published var hasCompletedGoal: Bool = false
     @Published var selectedGoal: FitnessGoal?
@@ -23,6 +25,7 @@ final class AppState: ObservableObject {
     func loadSession() {
         isAuthenticated = UserDefaults.standard.bool(forKey: "isAuthenticated")
         hasCompletedOnboarding = UserDefaults.standard.bool(forKey: "hasCompletedOnboarding")
+        hasCompletedBodyScan = UserDefaults.standard.bool(forKey: "hasCompletedBodyScan")
         hasCompletedProfile = UserDefaults.standard.bool(forKey: "hasCompletedProfile")
         hasCompletedGoal = UserDefaults.standard.bool(forKey: "hasCompletedGoal")
         if let raw = UserDefaults.standard.string(forKey: "selectedGoal") {
@@ -40,6 +43,11 @@ final class AppState: ObservableObject {
         UserDefaults.standard.set(true, forKey: "hasCompletedOnboarding")
     }
 
+    func markBodyScanComplete() {
+        hasCompletedBodyScan = true
+        UserDefaults.standard.set(true, forKey: "hasCompletedBodyScan")
+    }
+
     func markProfileComplete() {
         hasCompletedProfile = true
         UserDefaults.standard.set(true, forKey: "hasCompletedProfile")
@@ -55,12 +63,14 @@ final class AppState: ObservableObject {
     func signOut() {
         isAuthenticated = false
         hasCompletedOnboarding = false
+        hasCompletedBodyScan = false
         hasCompletedProfile = false
         hasCompletedGoal = false
         selectedGoal = nil
         userProfile = nil
         UserDefaults.standard.removeObject(forKey: "isAuthenticated")
         UserDefaults.standard.removeObject(forKey: "hasCompletedOnboarding")
+        UserDefaults.standard.removeObject(forKey: "hasCompletedBodyScan")
         UserDefaults.standard.removeObject(forKey: "hasCompletedProfile")
         UserDefaults.standard.removeObject(forKey: "hasCompletedGoal")
         UserDefaults.standard.removeObject(forKey: "selectedGoal")

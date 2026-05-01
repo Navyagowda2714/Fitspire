@@ -6,6 +6,7 @@
 //
 import Foundation
 import AuthenticationServices
+import Combine
 
 @MainActor
 final class AuthViewModel: ObservableObject {

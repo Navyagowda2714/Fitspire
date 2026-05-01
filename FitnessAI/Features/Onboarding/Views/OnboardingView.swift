@@ -1,4 +1,3 @@
-OnboardingPage.swift//
 //  OnboardingView.swift
 //  FitnessAI
 //

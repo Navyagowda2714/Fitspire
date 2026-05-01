@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 @main
 struct FitnessAIApp: App {
@@ -16,5 +17,6 @@ struct FitnessAIApp: App {
             RootView()
                 .environmentObject(appState)
         }
+        .modelContainer(for: UserProfile.self)
     }
 }
