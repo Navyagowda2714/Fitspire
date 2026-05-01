@@ -10,19 +10,19 @@ import SwiftUI
 struct MainTabView: View {
     var body: some View {
         TabView {
-            Text("Dashboard — coming in Phase 8")
+            WorkoutDashboardView()
                 .tabItem {
                     Label("Home", systemImage: "square.grid.2x2")
                 }
-            Text("Nutrition — coming in Phase 9")
+            Text("Nutrition — Phase 9")
                 .tabItem {
                     Label("Nutrition", systemImage: "fork.knife")
                 }
-            Text("Progress — coming in Phase 12")
+            Text("Progress — Phase 12")
                 .tabItem {
                     Label("Progress", systemImage: "chart.line.uptrend.xyaxis")
                 }
-            Text("Settings — coming in Phase 12")
+            Text("Settings — Phase 12")
                 .tabItem {
                     Label("Settings", systemImage: "gearshape")
                 }
