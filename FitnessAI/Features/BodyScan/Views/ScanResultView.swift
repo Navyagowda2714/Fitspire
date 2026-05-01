@@ -14,42 +14,48 @@ struct ScanResultView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Header
+
             VStack(alignment: .leading, spacing: 6) {
                 Text("Scan complete")
                     .font(.system(size: 28, weight: .medium))
-                Text("Here is your baseline posture analysis.")
+                Text("Your baseline posture analysis.")
                     .font(.system(size: 14))
                     .foregroundStyle(.secondary)
             }
             .padding(.horizontal, 24)
             .padding(.top, 32)
-            .padding(.bottom, 24)
+            .padding(.bottom, 20)
 
             // Scores
             HStack(spacing: 10) {
-                ScoreCard(
-                    label: "Posture",
-                    value: Int(viewModel.postureScore)
-                )
-                ScoreCard(
-                    label: "Symmetry",
-                    value: Int(viewModel.symmetryScore)
-                )
-                ScoreCard(
-                    label: "Mobility",
-                    value: Int(viewModel.mobilityScore)
-                )
+                ScoreCard(label: "Posture",  value: Int(viewModel.postureScore))
+                ScoreCard(label: "Symmetry", value: Int(viewModel.symmetryScore))
+                ScoreCard(label: "Mobility", value: Int(viewModel.mobilityScore))
             }
             .padding(.horizontal, 24)
-            .padding(.bottom, 20)
+            .padding(.bottom, 16)
+
+            // Training intensity
+            HStack(spacing: 10) {
+                Image(systemName: "bolt.fill")
+                    .font(.system(size: 13))
+                    .foregroundStyle(Color(hex: "7F77DD"))
+                Text("Recommended intensity: \(viewModel.recommendedIntensity)")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(Color(hex: "534AB7"))
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
+            .background(Color(hex: "EEEDFE"))
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .padding(.horizontal, 24)
+            .padding(.bottom, 16)
 
             // Notes
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: 10) {
                 Text("Scan notes")
                     .font(.system(size: 13, weight: .medium))
                     .foregroundStyle(.secondary)
-                    .padding(.horizontal, 24)
 
                 ForEach(viewModel.scanNotes, id: \.self) { note in
                     HStack(alignment: .top, spacing: 10) {
@@ -62,10 +68,10 @@ struct ScanResultView: View {
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
                     }
-                    .padding(.horizontal, 24)
                 }
             }
-            .padding(.bottom, 24)
+            .padding(.horizontal, 24)
+            .padding(.bottom, 16)
 
             // Disclaimer
             Text("Scan results are estimates based on visible landmarks. Not a medical assessment.")
@@ -73,11 +79,9 @@ struct ScanResultView: View {
                 .foregroundStyle(.tertiary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 24)
-                .padding(.bottom, 24)
 
             Spacer()
 
-            // Continue button
             Button(action: onContinue) {
                 Text("Continue to goal selection")
                     .font(.system(size: 16, weight: .medium))
