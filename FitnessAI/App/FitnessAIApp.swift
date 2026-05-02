@@ -17,6 +17,10 @@ struct FitnessAIApp: App {
             RootView()
                 .environmentObject(appState)
         }
-        .modelContainer(for: UserProfile.self)
+        .modelContainer(for: [
+            UserProfile.self,
+            BodyScanResult.self,
+            WorkoutPlan.self
+        ])
     }
 }

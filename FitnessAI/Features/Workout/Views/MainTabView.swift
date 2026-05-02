@@ -14,6 +14,10 @@ struct MainTabView: View {
                 .tabItem {
                     Label("Home", systemImage: "square.grid.2x2")
                 }
+            WorkoutPlanView()
+                .tabItem {
+                    Label("Plan", systemImage: "list.bullet.clipboard")
+                }
             Text("Nutrition — Phase 9")
                 .tabItem {
                     Label("Nutrition", systemImage: "fork.knife")
@@ -21,10 +25,6 @@ struct MainTabView: View {
             Text("Progress — Phase 12")
                 .tabItem {
                     Label("Progress", systemImage: "chart.line.uptrend.xyaxis")
-                }
-            Text("Settings — Phase 12")
-                .tabItem {
-                    Label("Settings", systemImage: "gearshape")
                 }
         }
         .tint(Color(hex: "7F77DD"))
