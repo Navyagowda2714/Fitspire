@@ -8,6 +8,7 @@
 import SwiftUI
 import SwiftData
 
+
 @main
 struct FitnessAIApp: App {
     @StateObject private var appState = AppState()
@@ -19,8 +20,7 @@ struct FitnessAIApp: App {
         }
         .modelContainer(for: [
             UserProfile.self,
-            BodyScanResult.self,
-            WorkoutPlan.self
+            BodyScanResult.self
         ])
     }
 }

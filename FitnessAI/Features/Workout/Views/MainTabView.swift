@@ -18,7 +18,7 @@ struct MainTabView: View {
                 .tabItem {
                     Label("Plan", systemImage: "list.bullet.clipboard")
                 }
-            Text("Nutrition — Phase 9")
+            NutritionView()
                 .tabItem {
                     Label("Nutrition", systemImage: "fork.knife")
                 }
