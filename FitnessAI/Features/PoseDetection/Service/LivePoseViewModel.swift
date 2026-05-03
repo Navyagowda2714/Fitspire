@@ -104,15 +104,36 @@ extension LivePoseViewModel: CameraManagerDelegate {
         _ manager: CameraManager,
         didOutput sampleBuffer: CMSampleBuffer
     ) {
-        guard let body = poseService.detect(sampleBuffer: sampleBuffer) else {
-            return
+        guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
+        let request = VNDetectHumanBodyPoseRequest()
+        try? VNImageRequestHandler(cvPixelBuffer: pixelBuffer, options: [:]).perform([request])
+
+        guard let observation = request.results?.first else { return }
+
+        var joints: [VNHumanBodyPoseObservation.JointName: CGPoint] = [:]
+        let allJoints: [VNHumanBodyPoseObservation.JointName] = [
+            .nose, .leftEye, .rightEye, .leftEar, .rightEar,
+            .leftShoulder, .rightShoulder, .leftElbow, .rightElbow,
+            .leftWrist, .rightWrist, .leftHip, .rightHip,
+            .leftKnee, .rightKnee, .leftAnkle, .rightAnkle, .root, .neck
+        ]
+        for jointName in allJoints {
+            if let point = try? observation.recognizedPoint(jointName),
+               point.confidence > 0.4 {
+                joints[jointName] = CGPoint(x: point.location.x, y: 1 - point.location.y)
+            }
         }
-        let alerts = safetyEngine.evaluate(
-            joints: body.joints,
-            exercise: currentExercise
-        )
+
+        guard !joints.isEmpty else { return }
+        let body = DetectedBody(joints: joints, confidence: observation.confidence)
+        let localSafetyEngine = SafetyRuleEngine()
+
         Task { @MainActor [weak self] in
             guard let self else { return }
+            let alerts = localSafetyEngine.evaluate(
+                joints: body.joints,
+                exercise: self.currentExercise
+            )
             self.detectedBody = body
             self.processAlerts(alerts)
         }

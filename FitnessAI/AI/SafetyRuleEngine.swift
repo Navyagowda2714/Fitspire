@@ -8,7 +8,7 @@
 import Foundation
 import Vision
 
-final class SafetyRuleEngine {
+final class SafetyRuleEngine: Sendable {
     private let formRuleEngine = FormRuleEngine()
 
     func evaluate(

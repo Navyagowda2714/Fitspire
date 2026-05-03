@@ -9,7 +9,7 @@ struct CameraPreviewView: UIViewRepresentable {
         view.backgroundColor = .black
 
         let previewLayer = cameraManager.makePreviewLayer()
-        previewLayer.frame = UIScreen.main.bounds
+        previewLayer.frame = view.bounds
         view.layer.addSublayer(previewLayer)
 
         return view

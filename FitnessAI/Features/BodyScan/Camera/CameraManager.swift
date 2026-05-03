@@ -5,18 +5,16 @@
 //  Created by Navyashree Byregowda on 01/05/2026.
 //
 
-
 import AVFoundation
-import UIKit
 import Combine
 
-protocol CameraManagerDelegate: AnyObject {
+protocol CameraManagerDelegate: AnyObject, Sendable {
     func cameraManager(_ manager: CameraManager,
                        didOutput sampleBuffer: CMSampleBuffer)
 }
 
 final class CameraManager: NSObject, ObservableObject {
-    weak var delegate: CameraManagerDelegate?
+    nonisolated(unsafe) weak var delegate: CameraManagerDelegate?
 
     private let session = AVCaptureSession()
     private let videoOutput = AVCaptureVideoDataOutput()
@@ -52,10 +50,9 @@ final class CameraManager: NSObject, ObservableObject {
     private func setupSession() {
         sessionQueue.async { [weak self] in
             guard let self else { return }
-            session.beginConfiguration()
-            session.sessionPreset = .high
+            self.session.beginConfiguration()
+            self.session.sessionPreset = .high
 
-            // Input
             guard
                 let device = AVCaptureDevice.default(
                     .builtInWideAngleCamera,
@@ -63,43 +60,45 @@ final class CameraManager: NSObject, ObservableObject {
                     position: .front
                 ),
                 let input = try? AVCaptureDeviceInput(device: device),
-                session.canAddInput(input)
+                self.session.canAddInput(input)
             else {
-                session.commitConfiguration()
+                self.session.commitConfiguration()
                 return
             }
-            session.addInput(input)
+            self.session.addInput(input)
 
-            // Output
-            videoOutput.setSampleBufferDelegate(self, queue: DispatchQueue(label: "video.output.queue"))
-            videoOutput.alwaysDiscardsLateVideoFrames = true
-            if session.canAddOutput(videoOutput) {
-                session.addOutput(videoOutput)
+            self.videoOutput.setSampleBufferDelegate(
+                self,
+                queue: DispatchQueue(label: "video.output.queue")
+            )
+            self.videoOutput.alwaysDiscardsLateVideoFrames = true
+
+            if self.session.canAddOutput(self.videoOutput) {
+                self.session.addOutput(self.videoOutput)
             }
 
-            // Orientation
-            if let connection = videoOutput.connection(with: .video) {
+            if let connection = self.videoOutput.connection(with: .video) {
                 if connection.isVideoRotationAngleSupported(90) {
                     connection.videoRotationAngle = 90
                 }
             }
 
-            session.commitConfiguration()
+            self.session.commitConfiguration()
         }
     }
 
     func startSession() {
         sessionQueue.async { [weak self] in
-            guard let self, !session.isRunning else { return }
-            session.startRunning()
+            guard let self, !self.session.isRunning else { return }
+            self.session.startRunning()
             DispatchQueue.main.async { self.isRunning = true }
         }
     }
 
     func stopSession() {
         sessionQueue.async { [weak self] in
-            guard let self, session.isRunning else { return }
-            session.stopRunning()
+            guard let self, self.session.isRunning else { return }
+            self.session.stopRunning()
             DispatchQueue.main.async { self.isRunning = false }
         }
     }
@@ -113,11 +112,12 @@ final class CameraManager: NSObject, ObservableObject {
 }
 
 extension CameraManager: AVCaptureVideoDataOutputSampleBufferDelegate {
-    func captureOutput(
+    nonisolated func captureOutput(
         _ output: AVCaptureOutput,
         didOutput sampleBuffer: CMSampleBuffer,
         from connection: AVCaptureConnection
     ) {
-        delegate?.cameraManager(self, didOutput: sampleBuffer)
+        let d = delegate
+        d?.cameraManager(self, didOutput: sampleBuffer)
     }
 }

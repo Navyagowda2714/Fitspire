@@ -76,9 +76,31 @@ extension BodyScanViewModel: CameraManagerDelegate {
         _ manager: CameraManager,
         didOutput sampleBuffer: CMSampleBuffer
     ) {
-        let detected = poseService.detect(sampleBuffer: sampleBuffer)
+        guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
+        let request = VNDetectHumanBodyPoseRequest()
+        try? VNImageRequestHandler(cvPixelBuffer: pixelBuffer, options: [:]).perform([request])
+
+        guard let observation = request.results?.first else { return }
+
+        var joints: [VNHumanBodyPoseObservation.JointName: CGPoint] = [:]
+        let allJoints: [VNHumanBodyPoseObservation.JointName] = [
+            .nose, .leftEye, .rightEye, .leftEar, .rightEar,
+            .leftShoulder, .rightShoulder, .leftElbow, .rightElbow,
+            .leftWrist, .rightWrist, .leftHip, .rightHip,
+            .leftKnee, .rightKnee, .leftAnkle, .rightAnkle, .root, .neck
+        ]
+        for jointName in allJoints {
+            if let point = try? observation.recognizedPoint(jointName),
+               point.confidence > 0.4 {
+                joints[jointName] = CGPoint(x: point.location.x, y: 1 - point.location.y)
+            }
+        }
+
+        guard !joints.isEmpty else { return }
+        let body = DetectedBody(joints: joints, confidence: observation.confidence)
+
         Task { @MainActor [weak self] in
-            self?.detectedBody = detected
+            self?.detectedBody = body
         }
     }
 }

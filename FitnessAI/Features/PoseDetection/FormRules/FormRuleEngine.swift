@@ -9,7 +9,7 @@ import Foundation
 import Vision
 import CoreGraphics
 
-final class FormRuleEngine {
+final class FormRuleEngine: Sendable {
 
     func evaluate(
         joints: [VNHumanBodyPoseObservation.JointName: CGPoint],

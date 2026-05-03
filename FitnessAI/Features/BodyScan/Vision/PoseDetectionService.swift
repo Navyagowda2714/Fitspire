@@ -14,7 +14,7 @@ struct DetectedBody {
     let confidence: Float
 }
 
-final class PoseDetectionService {
+final class PoseDetectionService: Sendable {
     private let requestHandler = VNSequenceRequestHandler()
     private let confidenceThreshold: Float = 0.4
 
