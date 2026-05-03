@@ -10,17 +10,18 @@ import SwiftUI
 
 struct LiveWorkoutView: View {
     let exercise: ExerciseType
-    @StateObject private var viewModel = LivePoseViewModel()
+    @StateObject private var viewModel   = LivePoseViewModel()
+    @StateObject private var sessionMgr  = WorkoutSessionManager()
     @Environment(\.dismiss) private var dismiss
-    @State private var showEndConfirm = false
+    @State private var showEndConfirm    = false
+    @State private var workoutStartTime  = Date()
+    @State private var showSavedAlert    = false
 
     var body: some View {
         ZStack {
-            // Camera feed
             CameraPreviewView(cameraManager: viewModel.cameraManager)
                 .ignoresSafeArea()
 
-            // Skeleton overlay
             if let body = viewModel.detectedBody {
                 GeometryReader { geo in
                     SkeletonOverlayView(
@@ -32,7 +33,7 @@ struct LiveWorkoutView: View {
             }
 
             VStack(spacing: 0) {
-                // Top status bar
+                // Top bar
                 HStack {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(exercise.rawValue)
@@ -98,18 +99,18 @@ struct LiveWorkoutView: View {
 
                 // Stats row
                 HStack(spacing: 8) {
-                    StatPill(label: "Reps", value: "\(viewModel.repCount)")
+                    StatPill(label: "Reps",  value: "\(viewModel.repCount)")
                     StatPill(
                         label: "Form",
                         value: "\(viewModel.currentFormScore)",
                         color: formScoreColor
                     )
-                    StatPill(label: "Time", value: viewModel.formattedTime)
+                    StatPill(label: "Time",  value: viewModel.formattedTime)
                 }
                 .padding(.horizontal, 16)
                 .padding(.bottom, 12)
 
-                // End workout button
+                // End button
                 Button {
                     showEndConfirm = true
                 } label: {
@@ -126,19 +127,43 @@ struct LiveWorkoutView: View {
             }
         }
         .onAppear {
+            workoutStartTime = Date()
             viewModel.startSession(exercise: exercise)
         }
         .onDisappear {
             viewModel.endSession()
         }
         .alert("End workout?", isPresented: $showEndConfirm) {
-            Button("End", role: .destructive) {
-                viewModel.endSession()
-                dismiss()
+            Button("End and save", role: .destructive) {
+                Task { await endAndSave() }
             }
             Button("Continue", role: .cancel) { }
         } message: {
-            Text("Your form score was \(viewModel.currentFormScore)/100")
+            Text("Your form score was \(viewModel.currentFormScore)/100. Save to Apple Health?")
+        }
+        .alert("Workout saved", isPresented: $showSavedAlert) {
+            Button("OK") { dismiss() }
+        } message: {
+            Text("Your workout has been saved to Apple Health.")
+        }
+    }
+
+    private func endAndSave() async {
+        viewModel.endSession()
+        let estimatedCalories = Double(viewModel.elapsedSeconds / 60) * 7.0
+
+        let saved = await sessionMgr.saveWorkout(
+            activityType: sessionMgr.activityType(for: exercise),
+            startDate: workoutStartTime,
+            endDate: Date(),
+            calories: estimatedCalories,
+            formScore: viewModel.currentFormScore
+        )
+
+        if saved {
+            showSavedAlert = true
+        } else {
+            dismiss()
         }
     }
 
@@ -148,26 +173,5 @@ struct LiveWorkoutView: View {
         case 60...79:  return Color(hex: "7F77DD")
         default:       return Color(hex: "D85A30")
         }
-    }
-}
-
-struct StatPill: View {
-    let label: String
-    let value: String
-    var color: Color = Color.primary
-
-    var body: some View {
-        VStack(spacing: 2) {
-            Text(value)
-                .font(.system(size: 18, weight: .medium))
-                .foregroundStyle(color)
-            Text(label)
-                .font(.system(size: 10))
-                .foregroundStyle(.white.opacity(0.6))
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 10)
-        .background(.ultraThinMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: 10))
     }
 }

@@ -22,7 +22,7 @@ struct MainTabView: View {
                 .tabItem {
                     Label("Nutrition", systemImage: "fork.knife")
                 }
-            Text("Progress — Phase 12")
+            ProgressView()
                 .tabItem {
                     Label("Progress", systemImage: "chart.line.uptrend.xyaxis")
                 }
