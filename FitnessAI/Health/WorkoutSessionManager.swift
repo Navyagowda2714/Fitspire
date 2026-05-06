@@ -7,6 +7,7 @@
 
 import Foundation
 import HealthKit
+import Combine
 
 @MainActor
 final class WorkoutSessionManager: ObservableObject {
@@ -33,30 +34,40 @@ final class WorkoutSessionManager: ObservableObject {
             return false
         }
 
-        let energyBurned = HKQuantity(
+        guard let calType = HKQuantityType.quantityType(
+            forIdentifier: .activeEnergyBurned
+        ) else { return false }
+
+        let calQuantity = HKQuantity(
             unit: .kilocalorie(),
             doubleValue: calories
         )
 
-        let workout = HKWorkout(
-            activityType: activityType,
+        let calSample = HKQuantitySample(
+            type: calType,
+            quantity: calQuantity,
             start: startDate,
-            end: endDate,
-            duration: endDate.timeIntervalSince(startDate),
-            totalEnergyBurned: energyBurned,
-            totalDistance: nil,
-            metadata: [
-                "formScore": formScore,
-                "source": "FitnessAI"
-            ]
+            end: endDate
+        )
+
+        let configuration = HKWorkoutConfiguration()
+        configuration.activityType = activityType
+
+        let builder = HKWorkoutBuilder(
+            healthStore: store,
+            configuration: configuration,
+            device: .local()
         )
 
         do {
-            try await store.save(workout)
+            try await builder.beginCollection(at: startDate)
+            try await builder.addSamples([calSample])
+            try await builder.endCollection(at: endDate)
+            let workout = try await builder.finishWorkout()
             lastSavedWorkout = workout
             return true
         } catch {
-            errorMessage = "Failed to save workout: \(error.localizedDescription)"
+            errorMessage = "Failed to save: \(error.localizedDescription)"
             return false
         }
     }
@@ -72,7 +83,7 @@ final class WorkoutSessionManager: ObservableObject {
         case .plank:
             return .coreTraining
         case .general:
-            return .functionalStrength
+            return .traditionalStrengthTraining
         }
     }
 }

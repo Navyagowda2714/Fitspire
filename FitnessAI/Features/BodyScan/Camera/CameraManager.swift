@@ -46,7 +46,44 @@ final class CameraManager: NSObject, ObservableObject {
             permissionGranted = false
         }
     }
+    
+    func switchCamera() {
+        sessionQueue.async { [weak self] in
+            guard let self else { return }
 
+            self.session.beginConfiguration()
+
+            guard let currentInput = self.session.inputs.first
+                    as? AVCaptureDeviceInput else {
+                self.session.commitConfiguration()
+                return
+            }
+
+            let newPosition: AVCaptureDevice.Position =
+                currentInput.device.position == .back ? .front : .back
+
+            guard
+                let newDevice = AVCaptureDevice.default(
+                    .builtInWideAngleCamera,
+                    for: .video,
+                    position: newPosition
+                ),
+                let newInput = try? AVCaptureDeviceInput(device: newDevice)
+            else {
+                self.session.commitConfiguration()
+                return
+            }
+
+            self.session.removeInput(currentInput)
+
+            if self.session.canAddInput(newInput) {
+                self.session.addInput(newInput)
+            }
+
+            self.session.commitConfiguration()
+        }
+    }
+    
     private func setupSession() {
         sessionQueue.async { [weak self] in
             guard let self else { return }
@@ -57,7 +94,7 @@ final class CameraManager: NSObject, ObservableObject {
                 let device = AVCaptureDevice.default(
                     .builtInWideAngleCamera,
                     for: .video,
-                    position: .front
+                    position: .back
                 ),
                 let input = try? AVCaptureDeviceInput(device: device),
                 self.session.canAddInput(input)

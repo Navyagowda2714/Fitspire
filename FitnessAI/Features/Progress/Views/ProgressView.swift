@@ -186,7 +186,12 @@ struct WorkoutHistoryRow: View {
     }
 
     var calories: String {
-        let cal = workout.totalEnergyBurned?.doubleValue(for: .kilocalorie()) ?? 0
+        guard let calType = HKQuantityType.quantityType(
+            forIdentifier: .activeEnergyBurned
+        ) else { return "-- kcal" }
+        let cal = workout.statistics(for: calType)?
+            .sumQuantity()?
+            .doubleValue(for: .kilocalorie()) ?? 0
         return "\(Int(cal)) kcal"
     }
 
@@ -235,7 +240,6 @@ extension HKWorkoutActivityType {
         switch self {
         case .traditionalStrengthTraining: return "Strength Training"
         case .coreTraining:                return "Core Training"
-        case .functionalStrength:          return "Functional Training"
         case .running:                     return "Running"
         case .cycling:                     return "Cycling"
         case .walking:                     return "Walking"

@@ -20,6 +20,15 @@ final class LivePoseViewModel: NSObject, ObservableObject {
     @Published var repCount: Int = 0
     @Published var currentExercise: ExerciseType = .squat
     @Published var elapsedSeconds: Int = 0
+    @Published var repProgress: Double = 0
+    @Published var repPhase: RepPhase = .up
+
+    private var lastAngle: Double = 0
+    private var inDownPhase: Bool = false
+
+    enum RepPhase {
+        case up, down
+    }
 
     let cameraManager = CameraManager()
     private let poseService     = PoseDetectionService()
@@ -57,7 +66,101 @@ final class LivePoseViewModel: NSObject, ObservableObject {
             }
         }
     }
+    func countRep(joints: [VNHumanBodyPoseObservation.JointName: CGPoint]) {
+        guard currentExercise != .plank else { return }
 
+        switch currentExercise {
+        case .squat, .deadlift:
+            countLegRep(joints: joints)
+        case .pushUp:
+            countPushUpRep(joints: joints)
+        case .shoulderPress:
+            countPressRep(joints: joints)
+        default:
+            break
+        }
+    }
+
+    private func countLegRep(
+        joints: [VNHumanBodyPoseObservation.JointName: CGPoint]
+    ) {
+        guard
+            let hip   = joints[.leftHip],
+            let knee  = joints[.leftKnee],
+            let ankle = joints[.leftAnkle]
+        else { return }
+
+        let angle = AngleCalculator.angle(
+            pointA: hip,
+            pointB: knee,
+            pointC: ankle
+        )
+
+        repProgress = max(0, min(1, (180 - angle) / 90))
+
+        if angle < 100 && !inDownPhase {
+            inDownPhase = true
+            repPhase = .down
+        } else if angle > 150 && inDownPhase {
+            inDownPhase = false
+            repPhase = .up
+            repCount += 1
+        }
+    }
+
+    private func countPushUpRep(
+        joints: [VNHumanBodyPoseObservation.JointName: CGPoint]
+    ) {
+        guard
+            let shoulder = joints[.leftShoulder],
+            let elbow    = joints[.leftElbow],
+            let wrist    = joints[.leftWrist]
+        else { return }
+
+        let angle = AngleCalculator.angle(
+            pointA: shoulder,
+            pointB: elbow,
+            pointC: wrist
+        )
+
+        repProgress = max(0, min(1, (180 - angle) / 100))
+
+        if angle < 90 && !inDownPhase {
+            inDownPhase = true
+            repPhase = .down
+        } else if angle > 150 && inDownPhase {
+            inDownPhase = false
+            repPhase = .up
+            repCount += 1
+        }
+    }
+
+    private func countPressRep(
+        joints: [VNHumanBodyPoseObservation.JointName: CGPoint]
+    ) {
+        guard
+            let shoulder = joints[.leftShoulder],
+            let elbow    = joints[.leftElbow],
+            let wrist    = joints[.leftWrist]
+        else { return }
+
+        let angle = AngleCalculator.angle(
+            pointA: shoulder,
+            pointB: elbow,
+            pointC: wrist
+        )
+
+        repProgress = max(0, min(1, angle / 160))
+
+        if angle < 90 && !inDownPhase {
+            inDownPhase = true
+            repPhase = .down
+        } else if angle > 155 && inDownPhase {
+            inDownPhase = false
+            repPhase = .up
+            repCount += 1
+        }
+    }
     private func stopTimer() {
         timer?.invalidate()
         timer = nil
@@ -136,6 +239,7 @@ extension LivePoseViewModel: CameraManagerDelegate {
             )
             self.detectedBody = body
             self.processAlerts(alerts)
+            self.countRep(joints: body.joints)   // ← add this line
         }
     }
 }

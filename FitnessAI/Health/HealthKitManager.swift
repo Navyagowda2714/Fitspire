@@ -26,30 +26,17 @@ final class HealthKitManager: ObservableObject {
     // Types to read
     private let readTypes: Set<HKObjectType> = {
         var types = Set<HKObjectType>()
-        if let hr = HKObjectType.quantityType(forIdentifier: .heartRate) {
-            types.insert(hr)
-        }
-        if let cal = HKObjectType.quantityType(forIdentifier: .activeEnergyBurned) {
-            types.insert(cal)
-        }
-        if let steps = HKObjectType.quantityType(forIdentifier: .stepCount) {
-            types.insert(steps)
-        }
-        if let workout = HKObjectType.workoutType() as? HKObjectType {
-            types.insert(workout)
-        }
+        if let hr    = HKObjectType.quantityType(forIdentifier: .heartRate) { types.insert(hr) }
+        if let cal   = HKObjectType.quantityType(forIdentifier: .activeEnergyBurned) { types.insert(cal) }
+        if let steps = HKObjectType.quantityType(forIdentifier: .stepCount) { types.insert(steps) }
+        types.insert(HKObjectType.workoutType())
         return types
     }()
 
-    // Types to write
     private let writeTypes: Set<HKSampleType> = {
         var types = Set<HKSampleType>()
-        if let cal = HKObjectType.quantityType(forIdentifier: .activeEnergyBurned) {
-            types.insert(cal)
-        }
-        if let workout = HKObjectType.workoutType() as? HKSampleType {
-            types.insert(workout)
-        }
+        if let cal = HKObjectType.quantityType(forIdentifier: .activeEnergyBurned) { types.insert(cal) }
+        types.insert(HKObjectType.workoutType())
         return types
     }()
 
@@ -157,11 +144,15 @@ final class HealthKitManager: ObservableObject {
             anchor: nil,
             limit: HKObjectQueryNoLimit
         ) { [weak self] _, samples, _, _, _ in
-            self?.processHeartRateSamples(samples)
+            guard let self else { return }
+            let bpm = Self.extractHeartRate(from: samples)
+            Task { @MainActor in self.heartRate = bpm }
         }
 
         query.updateHandler = { [weak self] _, samples, _, _, _ in
-            self?.processHeartRateSamples(samples)
+            guard let self else { return }
+            let bpm = Self.extractHeartRate(from: samples)
+            Task { @MainActor in self.heartRate = bpm }
         }
 
         store.execute(query)
@@ -175,16 +166,10 @@ final class HealthKitManager: ObservableObject {
         }
     }
 
-    private func processHeartRateSamples(_ samples: [HKSample]?) {
+    private nonisolated static func extractHeartRate(from samples: [HKSample]?) -> Double {
         guard let samples = samples as? [HKQuantitySample],
-              let latest = samples.last else { return }
-
-        let bpm = latest.quantity.doubleValue(
-            for: HKUnit(from: "count/min")
-        )
-        Task { @MainActor [weak self] in
-            self?.heartRate = bpm
-        }
+              let latest = samples.last else { return 0 }
+        return latest.quantity.doubleValue(for: HKUnit(from: "count/min"))
     }
 
     // MARK: - Fetch recent workouts

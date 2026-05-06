@@ -11,6 +11,8 @@ struct WorkoutDashboardView: View {
     @EnvironmentObject var appState: AppState
     @State private var showLiveWorkout = false
     @State private var selectedExercise: ExerciseType = .squat
+    @State private var showDemo = false
+    
 
     var body: some View {
         NavigationStack {
@@ -77,7 +79,7 @@ struct WorkoutDashboardView: View {
                             }
 
                             Button {
-                                showLiveWorkout = true
+                                showDemo = true
                             } label: {
                                 HStack(spacing: 8) {
                                     Image(systemName: "camera.viewfinder")
@@ -150,6 +152,14 @@ struct WorkoutDashboardView: View {
             }
             .navigationTitle("")
             .navigationBarHidden(true)
+            .fullScreenCover(isPresented: $showDemo) {
+                ExerciseDemoView(exercise: selectedExercise) {
+                    showDemo = false
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        showLiveWorkout = true
+                    }
+                }
+            }
             .fullScreenCover(isPresented: $showLiveWorkout) {
                 LiveWorkoutView(exercise: selectedExercise)
             }
