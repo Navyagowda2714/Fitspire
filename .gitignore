@@ -60,3 +60,26 @@ fastlane/report.xml
 fastlane/Preview.html
 fastlane/screenshots/**/*.png
 fastlane/test_output
+
+# Xcode
+xcuserdata/
+*.xcuserstate
+*.xcbkptlist
+DerivedData/
+*.moved-aside
+*.xccheckout
+*.xcscmblueprint
+
+# Code signing — never commit these
+*.p12
+*.mobileprovision
+ExportOptions.plist
+
+# SPM
+.build/
+.swiftpm/xcode/
+SourcePackages/
+
+# OS
+.DS_Store
+Thumbs.db
