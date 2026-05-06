@@ -10,21 +10,21 @@ import SwiftUI
 struct MainTabView: View {
     var body: some View {
         TabView {
-            Text("Dashboard — coming in Phase 8")
+            WorkoutDashboardView()
                 .tabItem {
                     Label("Home", systemImage: "square.grid.2x2")
                 }
-            Text("Nutrition — coming in Phase 9")
+            WorkoutPlanView()
+                .tabItem {
+                    Label("Plan", systemImage: "list.bullet.clipboard")
+                }
+            NutritionView()
                 .tabItem {
                     Label("Nutrition", systemImage: "fork.knife")
                 }
-            Text("Progress — coming in Phase 12")
+            ProgressView()
                 .tabItem {
                     Label("Progress", systemImage: "chart.line.uptrend.xyaxis")
-                }
-            Text("Settings — coming in Phase 12")
-                .tabItem {
-                    Label("Settings", systemImage: "gearshape")
                 }
         }
         .tint(Color(hex: "7F77DD"))

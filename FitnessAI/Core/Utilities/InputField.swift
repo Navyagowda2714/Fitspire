@@ -38,9 +38,7 @@ struct SelectionChip: View {
                 .padding(.vertical, 8)
                 .background(isSelected ? Color(hex: "EEEDFE") : Color(.systemGray6))
                 .foregroundStyle(
-                    isSelected
-                    ? Color(hex: "3C3489")
-                    : Color.secondary
+                    isSelected ? Color(hex: "3C3489") : Color.secondary
                 )
                 .clipShape(RoundedRectangle(cornerRadius: 20))
                 .overlay(

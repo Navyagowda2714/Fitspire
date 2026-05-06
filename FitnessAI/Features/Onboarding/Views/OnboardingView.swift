@@ -1,4 +1,3 @@
-OnboardingPage.swift//
 //  OnboardingView.swift
 //  FitnessAI
 //
@@ -13,8 +12,6 @@ struct OnboardingView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-
-            // Pages
             TabView(selection: $viewModel.currentPage) {
                 ForEach(Array(viewModel.pages.enumerated()), id: \.offset) { index, page in
                     OnboardingPageView(page: page)
@@ -24,7 +21,6 @@ struct OnboardingView: View {
             .tabViewStyle(.page(indexDisplayMode: .never))
             .animation(.easeInOut, value: viewModel.currentPage)
 
-            // Dots
             HStack(spacing: 6) {
                 ForEach(0..<viewModel.pages.count, id: \.self) { i in
                     RoundedRectangle(cornerRadius: 3)
@@ -42,7 +38,6 @@ struct OnboardingView: View {
             }
             .padding(.bottom, 24)
 
-            // Buttons
             VStack(spacing: 10) {
                 Button {
                     if viewModel.isLastPage {

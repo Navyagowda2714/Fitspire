@@ -6,6 +6,7 @@
 //
 import Foundation
 import AuthenticationServices
+import Combine
 
 @MainActor
 final class AuthViewModel: ObservableObject {
@@ -20,9 +21,7 @@ final class AuthViewModel: ObservableObject {
     ) {
         isLoading = true
         errorMessage = nil
-
         let success = authService.handleSignInWithApple(result)
-
         if success {
             appState.markAuthenticated()
         } else {
@@ -35,17 +34,14 @@ final class AuthViewModel: ObservableObject {
         isLoading = true
         errorMessage = nil
 
+        // If no Apple ID stored yet use biometrics as standalone login
         let success = await authService.authenticateWithBiometrics()
 
         if success {
             appState.markAuthenticated()
         } else {
-            errorMessage = "Biometric authentication failed."
+            errorMessage = "Face ID authentication failed. Please try Sign in with Apple first."
         }
         isLoading = false
-    }
-
-    func hasStoredAppleID() -> Bool {
-        authService.hasStoredAppleID()
     }
 }

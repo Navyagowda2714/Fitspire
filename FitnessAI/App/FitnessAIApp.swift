@@ -5,8 +5,8 @@
 //  Created by Navyashree Byregowda on 28/04/2026.
 //
 
-
 import SwiftUI
+import SwiftData
 
 @main
 struct FitnessAIApp: App {
@@ -17,5 +17,6 @@ struct FitnessAIApp: App {
             RootView()
                 .environmentObject(appState)
         }
+        .modelContainer(for: UserProfile.self)
     }
 }

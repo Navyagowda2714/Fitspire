@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import Combine
 
 @MainActor
 final class OnboardingViewModel: ObservableObject {
@@ -17,14 +18,6 @@ final class OnboardingViewModel: ObservableObject {
     }
 
     func nextPage() {
-        if !isLastPage {
-            currentPage += 1
-        }
-    }
-
-    func previousPage() {
-        if currentPage > 0 {
-            currentPage -= 1
-        }
+        if !isLastPage { currentPage += 1 }
     }
 }
