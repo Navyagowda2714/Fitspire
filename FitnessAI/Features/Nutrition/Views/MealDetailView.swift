@@ -5,6 +5,13 @@
 //  Created by Navyashree Byregowda on 03/05/2026.
 //
 
+//
+//  MealDetailView.swift
+//  FitnessAI
+//
+//  Created by Navyashree Byregowda on 03/05/2026.
+//
+
 
 import SwiftUI
 
@@ -19,10 +26,10 @@ struct MealDetailView: View {
 
                     // Macro row
                     HStack(spacing: 10) {
-                        MacroCard(value: "\(meal.calories)", label: "kcal", color: "7F77DD")
+                        MacroCard(value: "\(meal.calories)", label: "kcal", color: "C6FF3D")
                         MacroCard(value: "\(meal.proteinG)g", label: "Protein", color: "1D9E75")
                         MacroCard(value: "\(meal.carbsG)g", label: "Carbs", color: "BA7517")
-                        MacroCard(value: "\(meal.fatG)g", label: "Fat", color: "534AB7")
+                        MacroCard(value: "\(meal.fatG)g", label: "Fat", color: "C6FF3D")
                     }
                     .padding(.horizontal, 24)
 
@@ -30,17 +37,17 @@ struct MealDetailView: View {
                     HStack(spacing: 8) {
                         Image(systemName: "clock")
                             .font(.system(size: 14))
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.appT3)
                         Text("\(meal.prepMinutes) minutes prep")
                             .font(.system(size: 13))
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.appT3)
                     }
                     .padding(.horizontal, 24)
 
                     // Description
                     Text(meal.description)
                         .font(.system(size: 14))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.appT3)
                         .lineSpacing(4)
                         .padding(.horizontal, 24)
 
@@ -54,7 +61,7 @@ struct MealDetailView: View {
                             ForEach(meal.ingredients, id: \.self) { ingredient in
                                 HStack(spacing: 12) {
                                     Circle()
-                                        .fill(Color(hex: "7F77DD"))
+                                        .fill(Color.appLime)
                                         .frame(width: 6, height: 6)
                                     Text(ingredient)
                                         .font(.system(size: 13))
@@ -70,7 +77,7 @@ struct MealDetailView: View {
                                 }
                             }
                         }
-                        .background(Color(.systemBackground))
+                        .background(Color.appBG)
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                         .overlay(
                             RoundedRectangle(cornerRadius: 12)
@@ -87,11 +94,11 @@ struct MealDetailView: View {
 
                         Text(meal.instructions)
                             .font(.system(size: 13))
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.appT3)
                             .lineSpacing(5)
                             .padding(14)
                             .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(Color(.systemGray6))
+                            .background(Color.appBG2)
                             .clipShape(RoundedRectangle(cornerRadius: 12))
                             .padding(.horizontal, 24)
                     }
@@ -123,11 +130,11 @@ struct MacroCard: View {
                 .foregroundStyle(Color(hex: color))
             Text(label)
                 .font(.system(size: 10))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.appT3)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 12)
-        .background(Color(.systemGray6))
+        .background(Color.appBG2)
         .clipShape(RoundedRectangle(cornerRadius: 10))
     }
 }

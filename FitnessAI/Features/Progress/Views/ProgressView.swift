@@ -5,6 +5,13 @@
 //  Created by Navyashree Byregowda on 03/05/2026.
 //
 
+//
+//  ProgressView.swift
+//  FitnessAI
+//
+//  Created by Navyashree Byregowda on 03/05/2026.
+//
+
 
 import SwiftUI
 import HealthKit
@@ -47,14 +54,14 @@ struct ProgressView: View {
         VStack(spacing: 16) {
             Image(systemName: "heart.text.square.fill")
                 .font(.system(size: 52))
-                .foregroundStyle(Color(hex: "D85A30"))
+                .foregroundStyle(Color.appMove)
 
             Text("Connect Apple Health")
                 .font(.system(size: 20, weight: .medium))
 
             Text("Allow FitnessAI to read and save your workout data to Apple Health.")
                 .font(.system(size: 14))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.appT3)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 40)
 
@@ -71,7 +78,7 @@ struct ProgressView: View {
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
                     .frame(height: 52)
-                    .background(Color(hex: "D85A30"))
+                    .background(Color.appMove)
                     .clipShape(RoundedRectangle(cornerRadius: 14))
             }
             .padding(.horizontal, 24)
@@ -85,7 +92,7 @@ struct ProgressView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Today")
                 .font(.system(size: 13, weight: .medium))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.appT3)
                 .padding(.horizontal, 24)
 
             HStack(spacing: 12) {
@@ -120,13 +127,13 @@ struct ProgressView: View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Recent workouts")
                 .font(.system(size: 13, weight: .medium))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.appT3)
                 .padding(.horizontal, 24)
 
             if recentWorkouts.isEmpty {
                 Text("No workouts saved yet. Complete a workout to see it here.")
                     .font(.system(size: 13))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.appT3)
                     .padding(.horizontal, 24)
             } else {
                 ForEach(recentWorkouts.prefix(5), id: \.uuid) { workout in
@@ -161,11 +168,11 @@ struct HealthStatCard: View {
                 .foregroundStyle(Color.primary)
             Text(label)
                 .font(.system(size: 11))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.appT3)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 16)
-        .background(Color(.systemGray6))
+        .background(Color.appBG2)
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 }
@@ -199,11 +206,11 @@ struct WorkoutHistoryRow: View {
         HStack(spacing: 14) {
             ZStack {
                 RoundedRectangle(cornerRadius: 10)
-                    .fill(Color(hex: "EEEDFE"))
+                    .fill(Color.appLime.opacity(0.12))
                     .frame(width: 44, height: 44)
                 Image(systemName: "figure.strengthtraining.traditional")
                     .font(.system(size: 18))
-                    .foregroundStyle(Color(hex: "534AB7"))
+                    .foregroundStyle(Color.appLime)
             }
 
             VStack(alignment: .leading, spacing: 3) {
@@ -211,7 +218,7 @@ struct WorkoutHistoryRow: View {
                     .font(.system(size: 14, weight: .medium))
                 Text(formattedDate)
                     .font(.system(size: 12))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.appT3)
             }
 
             Spacer()
@@ -222,11 +229,11 @@ struct WorkoutHistoryRow: View {
                     .foregroundStyle(Color.primary)
                 Text(calories)
                     .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.appT3)
             }
         }
         .padding(14)
-        .background(Color(.systemBackground))
+        .background(Color.appBG)
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .overlay(
             RoundedRectangle(cornerRadius: 12)

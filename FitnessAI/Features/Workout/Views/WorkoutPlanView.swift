@@ -6,6 +6,14 @@
 //
 
 
+//
+//  WorkoutPlanView.swift
+//  FitnessAI
+//
+//  Created by Navyashree Byregowda on 01/05/2026.
+//
+
+
 import SwiftUI
 import SwiftData
 
@@ -40,10 +48,10 @@ struct WorkoutPlanView: View {
         VStack(spacing: 16) {
             ProgressView()
                 .scaleEffect(1.3)
-                .tint(Color(hex: "7F77DD"))
+                .tint(Color.appLime)
             Text("Building your personalised plan...")
                 .font(.system(size: 14))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.appT3)
         }
     }
 
@@ -51,7 +59,7 @@ struct WorkoutPlanView: View {
         VStack(spacing: 16) {
             Image(systemName: "figure.strengthtraining.traditional")
                 .font(.system(size: 48))
-                .foregroundStyle(Color(hex: "7F77DD"))
+                .foregroundStyle(Color.appLime)
             Text("No plan yet")
                 .font(.system(size: 18, weight: .medium))
             Button {
@@ -61,7 +69,7 @@ struct WorkoutPlanView: View {
                     .font(.system(size: 15, weight: .medium))
                     .foregroundStyle(.white)
                     .frame(width: 200, height: 48)
-                    .background(Color(hex: "7F77DD"))
+                    .background(Color.appLime)
                     .clipShape(RoundedRectangle(cornerRadius: 12))
             }
         }
@@ -77,7 +85,7 @@ struct WorkoutPlanView: View {
                         .font(.system(size: 22, weight: .medium))
                     Text(plan.splitType)
                         .font(.system(size: 14))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.appT3)
                 }
                 .padding(.horizontal, 24)
                 .padding(.top, 8)
@@ -103,7 +111,7 @@ struct WorkoutPlanView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Weekly schedule")
                         .font(.system(size: 13, weight: .medium))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.appT3)
                         .padding(.horizontal, 24)
 
                     ForEach(plan.workoutDays) { day in
@@ -123,14 +131,14 @@ struct WorkoutPlanView: View {
                 VStack(alignment: .leading, spacing: 6) {
                     Text("Progression plan")
                         .font(.system(size: 13, weight: .medium))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.appT3)
                     Text(plan.progressionNote)
                         .font(.system(size: 13))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.appT3)
                         .lineSpacing(4)
                 }
                 .padding(14)
-                .background(Color(hex: "EEEDFE"))
+                .background(Color.appLime.opacity(0.12))
                 .clipShape(RoundedRectangle(cornerRadius: 12))
                 .padding(.horizontal, 24)
 
@@ -139,17 +147,17 @@ struct WorkoutPlanView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Safety notes")
                             .font(.system(size: 13, weight: .medium))
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.appT3)
                             .padding(.horizontal, 24)
 
                         ForEach(plan.safetyNotes, id: \.self) { note in
                             HStack(alignment: .top, spacing: 10) {
                                 Image(systemName: "checkmark.shield.fill")
                                     .font(.system(size: 13))
-                                    .foregroundStyle(Color(hex: "1D9E75"))
+                                    .foregroundStyle(Color.appGood)
                                 Text(note)
                                     .font(.system(size: 13))
-                                    .foregroundStyle(.secondary)
+                                    .foregroundStyle(Color.appT3)
                             }
                             .padding(.horizontal, 24)
                         }
@@ -180,14 +188,14 @@ struct PlanStatCard: View {
         VStack(spacing: 4) {
             Text(value)
                 .font(.system(size: 20, weight: .medium))
-                .foregroundStyle(Color(hex: "534AB7"))
+                .foregroundStyle(Color.appLime)
             Text(label)
                 .font(.system(size: 11))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.appT3)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 14)
-        .background(Color(hex: "EEEDFE"))
+        .background(Color.appLime.opacity(0.12))
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 }
@@ -204,14 +212,14 @@ struct WorkoutDayRow: View {
                     ZStack {
                         RoundedRectangle(cornerRadius: 8)
                             .fill(day.isRestDay
-                                  ? Color(.systemGray6)
-                                  : Color(hex: "EEEDFE"))
+                                  ? Color.appBG2
+                                  : Color.appLime.opacity(0.12))
                             .frame(width: 44, height: 44)
                         Text(String(day.dayName.prefix(3)))
                             .font(.system(size: 11, weight: .medium))
                             .foregroundStyle(day.isRestDay
                                              ? Color.secondary
-                                             : Color(hex: "534AB7"))
+                                             : Color.appLime)
                     }
 
                     VStack(alignment: .leading, spacing: 2) {
@@ -221,7 +229,7 @@ struct WorkoutDayRow: View {
                         if !day.isRestDay {
                             Text("\(day.exercises.count) exercises · \(day.estimatedMinutes) min")
                                 .font(.system(size: 12))
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(Color.appT3)
                         }
                     }
 
@@ -230,11 +238,11 @@ struct WorkoutDayRow: View {
                     if !day.isRestDay {
                         Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
                             .font(.system(size: 12))
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.appT3)
                     }
                 }
                 .padding(12)
-                .background(Color(.systemBackground))
+                .background(Color.appBG)
                 .clipShape(RoundedRectangle(cornerRadius: 12))
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
@@ -253,7 +261,7 @@ struct WorkoutDayRow: View {
                             Spacer()
                             Text("\(exercise.sets) × \(exercise.reps)")
                                 .font(.system(size: 12))
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(Color.appT3)
                         }
                         .padding(.horizontal, 14)
                         .padding(.vertical, 10)
@@ -264,7 +272,7 @@ struct WorkoutDayRow: View {
                         }
                     }
                 }
-                .background(Color(.systemGray6))
+                .background(Color.appBG2)
                 .clipShape(RoundedRectangle(cornerRadius: 12))
                 .padding(.top, 4)
             }

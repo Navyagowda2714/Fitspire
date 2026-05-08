@@ -5,6 +5,13 @@
 //  Created by Navyashree Byregowda on 03/05/2026.
 //
 
+//
+//  NutritionView.swift
+//  FitnessAI
+//
+//  Created by Navyashree Byregowda on 03/05/2026.
+//
+
 
 import SwiftUI
 import SwiftData
@@ -43,10 +50,10 @@ struct NutritionView: View {
         VStack(spacing: 16) {
             ProgressView()
                 .scaleEffect(1.3)
-                .tint(Color(hex: "7F77DD"))
+                .tint(Color.appLime)
             Text("Building your meal plan...")
                 .font(.system(size: 14))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.appT3)
         }
     }
 
@@ -54,12 +61,12 @@ struct NutritionView: View {
         VStack(spacing: 16) {
             Image(systemName: "fork.knife.circle")
                 .font(.system(size: 52))
-                .foregroundStyle(Color(hex: "7F77DD"))
+                .foregroundStyle(Color.appLime)
             Text("No meal plan yet")
                 .font(.system(size: 18, weight: .medium))
             Text("We will generate one based on your goal and profile.")
                 .font(.system(size: 14))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.appT3)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 40)
             Button {
@@ -69,7 +76,7 @@ struct NutritionView: View {
                     .font(.system(size: 15, weight: .medium))
                     .foregroundStyle(.white)
                     .frame(width: 200, height: 48)
-                    .background(Color(hex: "7F77DD"))
+                    .background(Color.appLime)
                     .clipShape(RoundedRectangle(cornerRadius: 12))
             }
         }
@@ -83,7 +90,7 @@ struct NutritionView: View {
                 VStack(alignment: .leading, spacing: 6) {
                     Text(plan.goal.rawValue)
                         .font(.system(size: 14))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.appT3)
                     Text("\(plan.dailyCalories) kcal / day")
                         .font(.system(size: 28, weight: .medium))
                 }
@@ -105,7 +112,7 @@ struct NutritionView: View {
                     MacroCard(
                         value: "\(plan.fatTargetG)g",
                         label: "Fat",
-                        color: "534AB7"
+                        color: "C6FF3D"
                     )
                     MacroCard(
                         value: "\(plan.hydrationML / 1000)L",
@@ -119,7 +126,7 @@ struct NutritionView: View {
                 VStack(alignment: .leading, spacing: 10) {
                     Text("Today's meals")
                         .font(.system(size: 13, weight: .medium))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.appT3)
                         .padding(.horizontal, 24)
 
                     ForEach(MealType.allCases, id: \.self) { type in
@@ -138,18 +145,18 @@ struct NutritionView: View {
                     VStack(alignment: .leading, spacing: 10) {
                         Text("Nutrition tips")
                             .font(.system(size: 13, weight: .medium))
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.appT3)
                             .padding(.horizontal, 24)
 
                         ForEach(plan.nutritionNotes, id: \.self) { note in
                             HStack(alignment: .top, spacing: 10) {
                                 Image(systemName: "lightbulb.fill")
                                     .font(.system(size: 13))
-                                    .foregroundStyle(Color(hex: "BA7517"))
+                                    .foregroundStyle(Color.appWarn)
                                     .padding(.top, 1)
                                 Text(note)
                                     .font(.system(size: 13))
-                                    .foregroundStyle(.secondary)
+                                    .foregroundStyle(Color.appT3)
                                     .lineSpacing(3)
                             }
                             .padding(.horizontal, 24)
@@ -205,7 +212,7 @@ struct MealRow: View {
                 VStack(alignment: .leading, spacing: 3) {
                     Text(meal.type.rawValue)
                         .font(.system(size: 11))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.appT3)
                     Text(meal.name)
                         .font(.system(size: 14, weight: .medium))
                         .foregroundStyle(Color.primary)
@@ -216,18 +223,18 @@ struct MealRow: View {
                 VStack(alignment: .trailing, spacing: 3) {
                     Text("\(meal.calories) kcal")
                         .font(.system(size: 12, weight: .medium))
-                        .foregroundStyle(Color(hex: "7F77DD"))
+                        .foregroundStyle(Color.appLime)
                     Text("\(meal.proteinG)g protein")
                         .font(.system(size: 11))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.appT3)
                 }
 
                 Image(systemName: "chevron.right")
                     .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.appT3)
             }
             .padding(14)
-            .background(Color(.systemBackground))
+            .background(Color.appBG)
             .clipShape(RoundedRectangle(cornerRadius: 12))
             .overlay(
                 RoundedRectangle(cornerRadius: 12)

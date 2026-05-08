@@ -5,6 +5,13 @@
 //  Created by Navyashree Byregowda on 28/04/2026.
 //
 
+//
+//  ProfileSetupView.swift
+//  FitnessAI
+//
+//  Created by Navyashree Byregowda on 28/04/2026.
+//
+
 import SwiftUI
 import SwiftData
 
@@ -22,7 +29,7 @@ struct ProfileSetupView: View {
                         .font(.system(size: 28, weight: .medium))
                     Text("Used to personalise your workout and nutrition plan.")
                         .font(.system(size: 14))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.appT3)
                 }
                 .padding(.top, 60)
 
@@ -47,7 +54,7 @@ struct ProfileSetupView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Activity level")
                         .font(.system(size: 12))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.appT3)
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 8) {
                             ForEach(ActivityLevel.allCases, id: \.self) { level in
@@ -66,7 +73,7 @@ struct ProfileSetupView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Experience level")
                         .font(.system(size: 12))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.appT3)
                     HStack(spacing: 8) {
                         ForEach(ExperienceLevel.allCases, id: \.self) { level in
                             SelectionChip(
@@ -84,7 +91,7 @@ struct ProfileSetupView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Injuries or limitations (optional)")
                         .font(.system(size: 12))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.appT3)
                     TextField("e.g. lower back pain, bad knee", text: $viewModel.injuries)
                         .inputFieldStyle()
                 }
@@ -98,7 +105,7 @@ struct ProfileSetupView: View {
                         .font(.system(size: 16, weight: .medium))
                         .frame(maxWidth: .infinity)
                         .frame(height: 52)
-                        .background(viewModel.isValid ? Color(hex: "7F77DD") : Color.secondary.opacity(0.2))
+                        .background(viewModel.isValid ? Color.appLime : Color.secondary.opacity(0.2))
                         .foregroundStyle(viewModel.isValid ? .white : .secondary)
                         .clipShape(RoundedRectangle(cornerRadius: 14))
                 }
