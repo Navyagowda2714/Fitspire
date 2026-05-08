@@ -5,7 +5,6 @@
 //  Created by Navyashree Byregowda on 05/05/2026.
 //
 
-
 import SwiftUI
 
 struct ExerciseAnimationView: View {
@@ -15,11 +14,11 @@ struct ExerciseAnimationView: View {
 
     var body: some View {
         ZStack {
-            Color(hex: "0D0D0D")
+            Color.appBG
                 .clipShape(RoundedRectangle(cornerRadius: 16))
 
             Rectangle()
-                .fill(Color(hex: "7F77DD").opacity(0.3))
+                .fill(Color.appLime.opacity(0.3))
                 .frame(height: 1)
                 .frame(maxWidth: 120)
                 .offset(y: 75)
@@ -36,7 +35,7 @@ struct ExerciseAnimationView: View {
                 Spacer()
                 Text(phaseLabel)
                     .font(.system(size: 11, weight: .medium))
-                    .foregroundStyle(Color(hex: "7F77DD"))
+                    .foregroundStyle(Color.appLime)
                     .padding(.bottom, 8)
             }
         }
@@ -98,8 +97,8 @@ struct ExerciseAnimationView: View {
         cy: Double,
         t: Double
     ) {
-        let purple = Color(hex: "7F77DD")
-        let green  = Color(hex: "1D9E75")
+        let purple = Color.appLime
+        let green  = Color.appGood
 
         switch exercise {
         case .squat:         drawSquat(context, cx, cy, t, purple, green)
@@ -218,7 +217,7 @@ struct ExerciseAnimationView: View {
         line(ctx, from: CGPoint(x: headX, y: headY+22),
              to: CGPoint(x: cx+14-hinge*0.1, y: cy+18+hinge*0.2), color: a)
         line(ctx, from: CGPoint(x: cx-50, y: cy+78),
-             to: CGPoint(x: cx+50, y: cy+78), color: Color(hex: "534AB7"), width: 5)
+             to: CGPoint(x: cx+50, y: cy+78), color: Color.appLime, width: 5)
         line(ctx, from: CGPoint(x: cx-hinge*0.4, y: cy-10+hinge*0.3),
              to: CGPoint(x: cx-20, y: cy+40), color: c)
         line(ctx, from: CGPoint(x: cx-20, y: cy+40),

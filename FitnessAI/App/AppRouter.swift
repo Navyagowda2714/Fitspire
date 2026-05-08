@@ -16,10 +16,8 @@ struct RootView: View {
                 LoginView()
             } else if !appState.hasCompletedOnboarding {
                 OnboardingView()
-            } else if !appState.hasCompletedProfile {
-                ProfileSetupView()
-            } else if !appState.hasCompletedGoal {
-                GoalSelectionView()
+            } else if !appState.hasCompletedProfile || !appState.hasCompletedGoal {
+                QuestionnaireView()
             } else {
                 MainTabView()
             }

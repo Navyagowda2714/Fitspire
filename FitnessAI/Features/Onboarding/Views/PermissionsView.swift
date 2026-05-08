@@ -5,6 +5,13 @@
 //  Created by Navyashree Byregowda on 28/04/2026.
 //
 
+//
+//  PermissionsView.swift
+//  FitnessAI
+//
+//  Created by Navyashree Byregowda on 28/04/2026.
+//
+
 import SwiftUI
 import AVFoundation
 import UserNotifications
@@ -20,7 +27,7 @@ struct PermissionsView: View {
                     .font(.system(size: 28, weight: .medium))
                 Text("FitnessAI needs these to work.\nYou can change them in Settings anytime.")
                     .font(.system(size: 14))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.appT3)
             }
             .padding(.horizontal, 24)
             .padding(.top, 60)
@@ -34,7 +41,7 @@ struct PermissionsView: View {
                     }
                 }
             }
-            .background(Color(.systemBackground))
+            .background(Color.appBG)
             .clipShape(RoundedRectangle(cornerRadius: 16))
             .overlay(
                 RoundedRectangle(cornerRadius: 16)
@@ -52,7 +59,7 @@ struct PermissionsView: View {
                         .font(.system(size: 16, weight: .medium))
                         .frame(maxWidth: .infinity)
                         .frame(height: 52)
-                        .background(Color(hex: "7F77DD"))
+                        .background(Color.appLime)
                         .foregroundStyle(.white)
                         .clipShape(RoundedRectangle(cornerRadius: 14))
                 }
@@ -91,14 +98,14 @@ struct PermissionRowView: View {
                     .font(.system(size: 14, weight: .medium))
                 Text(permission.subtitle)
                     .font(.system(size: 12))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.appT3)
             }
             Spacer()
             Image(systemName: permission.isGranted ? "checkmark.circle.fill" : "circle")
                 .font(.system(size: 20))
                 .foregroundStyle(
                     permission.isGranted
-                    ? Color(hex: "1D9E75")
+                    ? Color.appGood
                     : Color.secondary.opacity(0.4)
                 )
         }

@@ -6,6 +6,14 @@
 //
 
 
+//
+//  CuisinePreferenceView.swift
+//  FitnessAI
+//
+//  Created by Navyashree Byregowda on 05/05/2026.
+//
+
+
 import SwiftUI
 
 struct CuisinePreferenceView: View {
@@ -23,27 +31,27 @@ struct CuisinePreferenceView: View {
                         .font(.system(size: 28, weight: .medium))
                     Text("Tap once to love it, twice to avoid it, three times to clear.")
                         .font(.system(size: 13))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.appT3)
                 }
                 .padding(.top, 60)
 
                 HStack(spacing: 16) {
                     Label("Love", systemImage: "heart.fill")
                         .font(.system(size: 12))
-                        .foregroundStyle(Color(hex: "1D9E75"))
+                        .foregroundStyle(Color.appGood)
                     Label("Avoid", systemImage: "xmark.circle.fill")
                         .font(.system(size: 12))
-                        .foregroundStyle(Color(hex: "D85A30"))
+                        .foregroundStyle(Color.appMove)
                     Label("Neutral", systemImage: "circle")
                         .font(.system(size: 12))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.appT3)
                 }
 
                 ForEach(regions, id: \.self) { region in
                     VStack(alignment: .leading, spacing: 10) {
                         Text(region)
                             .font(.system(size: 13, weight: .medium))
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.appT3)
 
                         LazyVGrid(
                             columns: [
@@ -75,7 +83,7 @@ struct CuisinePreferenceView: View {
                         .font(.system(size: 16, weight: .medium))
                         .frame(maxWidth: .infinity)
                         .frame(height: 52)
-                        .background(Color(hex: "7F77DD"))
+                        .background(Color.appLime)
                         .foregroundStyle(.white)
                         .clipShape(RoundedRectangle(cornerRadius: 14))
                 }
@@ -115,7 +123,7 @@ struct CuisineChip: View {
 
     var bgColor: Color {
         switch state {
-        case .neutral:  return Color(.systemGray6)
+        case .neutral:  return Color.appBG2
         case .liked:    return Color(hex: "E1F5EE")
         case .disliked: return Color(hex: "FAECE7")
         }
