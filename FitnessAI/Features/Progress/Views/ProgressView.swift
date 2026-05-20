@@ -5,13 +5,6 @@
 //  Created by Navyashree Byregowda on 03/05/2026.
 //
 
-//
-//  ProgressView.swift
-//  FitnessAI
-//
-//  Created by Navyashree Byregowda on 03/05/2026.
-//
-
 
 import SwiftUI
 import HealthKit

@@ -5,6 +5,7 @@
 //  Created by Navyashree Byregowda on 28/04/2026.
 //
 
+
 import SwiftUI
 
 struct RootView: View {
@@ -12,7 +13,12 @@ struct RootView: View {
 
     var body: some View {
         Group {
-            if !appState.isAuthenticated {
+            if !appState.hasSeenIntro {
+                // First launch: show intro slides
+                IntroView {
+                    appState.markIntroSeen()
+                }
+            } else if !appState.isAuthenticated {
                 LoginView()
             } else if !appState.hasCompletedOnboarding {
                 OnboardingView()
@@ -22,8 +28,9 @@ struct RootView: View {
                 MainTabView()
             }
         }
-        .animation(.easeInOut(duration: 0.3), value: appState.isAuthenticated)
-        .animation(.easeInOut(duration: 0.3), value: appState.hasCompletedOnboarding)
-        .animation(.easeInOut(duration: 0.3), value: appState.hasCompletedGoal)
+        .animation(.easeInOut(duration: 0.35), value: appState.hasSeenIntro)
+        .animation(.easeInOut(duration: 0.35), value: appState.isAuthenticated)
+        .animation(.easeInOut(duration: 0.35), value: appState.hasCompletedOnboarding)
+        .animation(.easeInOut(duration: 0.35), value: appState.hasCompletedGoal)
     }
 }

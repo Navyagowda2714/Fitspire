@@ -39,8 +39,8 @@ final class QuestionnaireViewModel: ObservableObject {
 
     var canProceed: Bool {
         switch currentStep {
-        case .welcome:      return true
-        case .basicInfo:    return !response.name.isEmpty && response.age > 0
+        case .welcome:      return !response.name.trimmingCharacters(in: .whitespaces).isEmpty  // must enter name first
+        case .basicInfo:    return true  // all fields have defaults; no blocking needed
         case .parqSafety:   return true
         case .healthCheck:  return true
         case .fitnessLevel: return true
@@ -79,6 +79,8 @@ final class QuestionnaireViewModel: ObservableObject {
             guard let self else { return }
             self.generatedPlan = self.planEngine.generate(from: self.response)
             self.isGenerating = false
+            // Persist gender so exercise demo shows correct body diagram
+            UserDefaults.standard.set(self.response.gender, forKey: "userGender")
             self.isComplete = true
         }
     }

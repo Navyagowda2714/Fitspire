@@ -4,10 +4,21 @@
 //
 //  Created by Navyashree Byregowda on 01/05/2026.
 //
+//
+//  CameraManager.swift
+//  FitnessAI
+//
+//  Created by Navyashree Byregowda on 01/05/2026.
+//
 
 import AVFoundation
 import Combine
 
+// @preconcurrency: tells Swift 6 strict-concurrency checker this protocol predates
+// the concurrency model. Suppresses the false-positive "call to main-actor-isolated method"
+// warning when CameraManager (nonisolated captureOutput) calls the delegate.
+// The conforming LivePoseViewModel extension explicitly marks the method `nonisolated`.
+@preconcurrency
 protocol CameraManagerDelegate: AnyObject, Sendable {
     func cameraManager(_ manager: CameraManager,
                        didOutput sampleBuffer: CMSampleBuffer)
@@ -154,6 +165,7 @@ extension CameraManager: AVCaptureVideoDataOutputSampleBufferDelegate {
         didOutput sampleBuffer: CMSampleBuffer,
         from connection: AVCaptureConnection
     ) {
+        // Capture delegate reference immediately to avoid data race on optional access
         let d = delegate
         d?.cameraManager(self, didOutput: sampleBuffer)
     }

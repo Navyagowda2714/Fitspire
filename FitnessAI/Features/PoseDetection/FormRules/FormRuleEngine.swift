@@ -4,6 +4,12 @@
 //
 //  Created by Navyashree Byregowda on 01/05/2026.
 //
+//
+//  FormRuleEngine.swift
+//  FitnessAI
+//
+//  Created by Navyashree Byregowda on 01/05/2026.
+//
 
 import Foundation
 import Vision
@@ -16,12 +22,16 @@ final class FormRuleEngine: Sendable {
         exercise: ExerciseType
     ) -> [FormAlert] {
         switch exercise {
-        case .squat:         return evaluateSquat(joints: joints)
-        case .plank:         return evaluatePlank(joints: joints)
-        case .pushUp:        return evaluatePushUp(joints: joints)
-        case .shoulderPress: return evaluateShoulderPress(joints: joints)
-        case .deadlift:      return evaluateDeadlift(joints: joints)
-        case .general:       return evaluateGeneral(joints: joints)
+        case .squat:          return evaluateSquat(joints: joints)
+        case .plank:          return evaluatePlank(joints: joints)
+        case .pushUp:         return evaluatePushUp(joints: joints)
+        case .shoulderPress:  return evaluateShoulderPress(joints: joints)
+        case .deadlift:       return evaluateDeadlift(joints: joints)
+        case .lunge:          return evaluateLunge(joints: joints)
+        case .gluteBridge:    return evaluateGluteBridge(joints: joints)
+        case .mountainClimber: return evaluateMountainClimber(joints: joints)
+        case .highKnees:      return evaluateHighKnees(joints: joints)
+        case .general:        return evaluateGeneral(joints: joints)
         }
     }
 
@@ -267,4 +277,85 @@ final class FormRuleEngine: Sendable {
         }
         return []
     }
+    // MARK: - Lunge
+
+    private func evaluateLunge(
+        joints: [VNHumanBodyPoseObservation.JointName: CGPoint]
+    ) -> [FormAlert] {
+        var alerts: [FormAlert] = []
+        // Use best-confidence side
+        let useLeft = (joints[.leftHip] != nil && joints[.leftKnee] != nil && joints[.leftAnkle] != nil)
+        let hpK: VNHumanBodyPoseObservation.JointName = useLeft ? .leftHip   : .rightHip
+        let knK: VNHumanBodyPoseObservation.JointName = useLeft ? .leftKnee  : .rightKnee
+        let anK: VNHumanBodyPoseObservation.JointName = useLeft ? .leftAnkle : .rightAnkle
+
+        if let _ = joints[hpK], let kn = joints[knK], let an = joints[anK] {
+            // Knee over toe: knee x vs ankle x
+            let kneeOverToe = Double(kn.x - an.x)
+            alerts += checkThreshold(value: abs(kneeOverToe), rule: ExerciseFormRules.lunge[0], exercise: .lunge)
+        }
+        if let neck = joints[.neck], let root = joints[.root] {
+            let torsoLean = abs(neck.x - root.x)
+            alerts += checkThreshold(value: Double(torsoLean), rule: ExerciseFormRules.lunge[1], exercise: .lunge)
+        }
+        return alerts
+    }
+
+    // MARK: - Glute Bridge
+
+    private func evaluateGluteBridge(
+        joints: [VNHumanBodyPoseObservation.JointName: CGPoint]
+    ) -> [FormAlert] {
+        var alerts: [FormAlert] = []
+        if let ls = joints[.leftShoulder], let lh = joints[.leftHip], let la = joints[.leftAnkle] {
+            let expected = (ls.y + la.y) / 2
+            let sag = max(0, Double(lh.y - expected))   // hip below line = not driven up
+            alerts += checkThreshold(value: sag, rule: ExerciseFormRules.gluteBridge[0], exercise: .gluteBridge)
+        }
+        if let lk = joints[.leftKnee], let rk = joints[.rightKnee] {
+            let drift = abs(lk.x - rk.x)
+            alerts += checkThreshold(value: Double(drift), rule: ExerciseFormRules.gluteBridge[1], exercise: .gluteBridge)
+        }
+        return alerts
+    }
+
+    // MARK: - Mountain Climber
+
+    private func evaluateMountainClimber(
+        joints: [VNHumanBodyPoseObservation.JointName: CGPoint]
+    ) -> [FormAlert] {
+        var alerts: [FormAlert] = []
+        if let ls = joints[.leftShoulder], let lh = joints[.leftHip], let la = joints[.leftAnkle] {
+            let expectedHipY = (ls.y + la.y) / 2
+            let hipPike = max(0, Double(expectedHipY - lh.y))  // hip above line = too high
+            let hipSag  = max(0, Double(lh.y - expectedHipY))
+            alerts += checkThreshold(value: hipPike, rule: ExerciseFormRules.mountainClimber[0], exercise: .mountainClimber)
+            alerts += checkThreshold(value: hipSag,  rule: ExerciseFormRules.mountainClimber[1], exercise: .mountainClimber)
+        }
+        return alerts
+    }
+
+    // MARK: - High Knees
+
+    private func evaluateHighKnees(
+        joints: [VNHumanBodyPoseObservation.JointName: CGPoint]
+    ) -> [FormAlert] {
+        var alerts: [FormAlert] = []
+        let useLeft = (joints[.leftKnee] != nil && joints[.leftHip] != nil)
+        let hpK: VNHumanBodyPoseObservation.JointName = useLeft ? .leftHip  : .rightHip
+        let knK: VNHumanBodyPoseObservation.JointName = useLeft ? .leftKnee : .rightKnee
+
+        if let hp = joints[hpK], let kn = joints[knK] {
+            // Knee should be at or above hip (higher y value in Vision = lower on screen)
+            let belowHip = max(0, Double(hp.y - kn.y))  // positive = knee below hip
+            alerts += checkThreshold(value: belowHip, rule: ExerciseFormRules.highKnees[0], exercise: .highKnees)
+        }
+        if let neck = joints[.neck], let root = joints[.root] {
+            let lean = abs(neck.x - root.x)
+            alerts += checkThreshold(value: Double(lean), rule: ExerciseFormRules.highKnees[1], exercise: .highKnees)
+        }
+        return alerts
+    }
+
+
 }

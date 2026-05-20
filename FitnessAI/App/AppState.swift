@@ -4,30 +4,35 @@
 //
 //  Created by Navyashree Byregowda on 28/04/2026.
 //
+//
+
+
 import Foundation
 import SwiftUI
 import Combine
 
 @MainActor
 final class AppState: ObservableObject {
-    @Published var isAuthenticated: Bool = false
+    @Published var isAuthenticated:       Bool = false
     @Published var hasCompletedOnboarding: Bool = false
-    @Published var hasCompletedBodyScan: Bool = false
-    @Published var hasCompletedProfile: Bool = false
-    @Published var hasCompletedGoal: Bool = false
-    @Published var selectedGoal: FitnessGoal?
-    @Published var userProfile: UserProfile?
+    @Published var hasCompletedBodyScan:  Bool = false
+    @Published var hasCompletedProfile:   Bool = false
+    @Published var hasCompletedGoal:      Bool = false
+    @Published var hasSeenIntro:          Bool = false   // ← NEW
+    @Published var selectedGoal:          FitnessGoal?
+    @Published var userProfile:           UserProfile?
 
     init() {
         loadSession()
     }
 
     func loadSession() {
-        isAuthenticated = UserDefaults.standard.bool(forKey: "isAuthenticated")
+        isAuthenticated        = UserDefaults.standard.bool(forKey: "isAuthenticated")
         hasCompletedOnboarding = UserDefaults.standard.bool(forKey: "hasCompletedOnboarding")
-        hasCompletedBodyScan = UserDefaults.standard.bool(forKey: "hasCompletedBodyScan")
-        hasCompletedProfile = UserDefaults.standard.bool(forKey: "hasCompletedProfile")
-        hasCompletedGoal = UserDefaults.standard.bool(forKey: "hasCompletedGoal")
+        hasCompletedBodyScan   = UserDefaults.standard.bool(forKey: "hasCompletedBodyScan")
+        hasCompletedProfile    = UserDefaults.standard.bool(forKey: "hasCompletedProfile")
+        hasCompletedGoal       = UserDefaults.standard.bool(forKey: "hasCompletedGoal")
+        hasSeenIntro           = UserDefaults.standard.bool(forKey: "hasSeenIntro")   // ← NEW
         if let raw = UserDefaults.standard.string(forKey: "selectedGoal") {
             selectedGoal = FitnessGoal(rawValue: raw)
         }
@@ -54,20 +59,26 @@ final class AppState: ObservableObject {
     }
 
     func markGoalComplete(goal: FitnessGoal) {
-        selectedGoal = goal
+        selectedGoal    = goal
         hasCompletedGoal = true
         UserDefaults.standard.set(goal.rawValue, forKey: "selectedGoal")
-        UserDefaults.standard.set(true, forKey: "hasCompletedGoal")
+        UserDefaults.standard.set(true,          forKey: "hasCompletedGoal")
+    }
+
+    func markIntroSeen() {            // ← NEW
+        hasSeenIntro = true
+        UserDefaults.standard.set(true, forKey: "hasSeenIntro")
     }
 
     func signOut() {
-        isAuthenticated = false
+        isAuthenticated        = false
         hasCompletedOnboarding = false
-        hasCompletedBodyScan = false
-        hasCompletedProfile = false
-        hasCompletedGoal = false
-        selectedGoal = nil
-        userProfile = nil
+        hasCompletedBodyScan   = false
+        hasCompletedProfile    = false
+        hasCompletedGoal       = false
+        // hasSeenIntro stays true — don't re-show intro after sign-out
+        selectedGoal   = nil
+        userProfile    = nil
         UserDefaults.standard.removeObject(forKey: "isAuthenticated")
         UserDefaults.standard.removeObject(forKey: "hasCompletedOnboarding")
         UserDefaults.standard.removeObject(forKey: "hasCompletedBodyScan")

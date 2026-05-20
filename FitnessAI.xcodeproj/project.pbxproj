@@ -36,6 +36,7 @@
 		5D50945E2FA153F50027A8C7 /* Exceptions for "FitnessAI" folder in "FitnessAI" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				ExerciseVideos/burpee.mp4,
 				Info.plist,
 			);
 			target = 5D50941C2FA13FF90027A8C7 /* FitnessAI */;
