@@ -2,15 +2,37 @@
 //  ExerciseFormViews.swift
 //  FitnessAI
 //
-//  Created by Navyashree Byregowda on 20/05/2026.
+//  All exercise live-camera form-check views built with the exact same
+//  Vision + angle-analysis architecture as the squat (ContentView.swift).
+//  Each exercise has: Issue enum, Phase enum, PostureResult, ViewModel,
+//  SkeletonOverlay, AngleCards, rep/hold counting, bad-rep flash.
 //
-
-
+//  Router: ExerciseLiveView(exercise: HomeExercise) picks the right view.
+//
 
 import SwiftUI
 import AVFoundation
 import Vision
 import Combine
+
+// MARK: - Session preview (AVCaptureSession → SwiftUI)
+// Self-contained so ExerciseFormViews has no dependency on CameraPreviewView.swift
+
+struct ExerciseSessionPreview: UIViewRepresentable {
+    let session: AVCaptureSession
+    func makeUIView(context: Context) -> ExercisePreviewUIView {
+        let v = ExercisePreviewUIView()
+        v.videoPreviewLayer.session = session
+        v.videoPreviewLayer.videoGravity = .resizeAspectFill
+        return v
+    }
+    func updateUIView(_ uiView: ExercisePreviewUIView, context: Context) {}
+}
+
+final class ExercisePreviewUIView: UIView {
+    override class var layerClass: AnyClass { AVCaptureVideoPreviewLayer.self }
+    var videoPreviewLayer: AVCaptureVideoPreviewLayer { layer as! AVCaptureVideoPreviewLayer }
+}
 
 
 // MARK: - Rule engine integration helper
@@ -155,7 +177,7 @@ struct ExerciseLiveView: View {
                 case "Glute Bridge":      GluteBridgeCameraView()
                 case "Mountain Climber":  MountainClimberCameraView()
                 case "High Knees":        HighKneesCameraView()
-                default:                  SquatCameraView()
+                default:                  LiveWorkoutView(exercise: .squat)
                 }
             }
             // Back button on top of every view
@@ -264,8 +286,9 @@ final class PlankViewModel: NSObject, ObservableObject, AVCaptureVideoDataOutput
     }
     private func analyzeFrame(_ points: [VNHumanBodyPoseObservation.JointName: VNRecognizedPoint]) {
         var r = PlankResult()
-        let useLeft = (points[.leftShoulder]?.confidence ?? 0) + (points[.leftHip]?.confidence ?? 0) + (points[.leftAnkle]?.confidence ?? 0)
-                    >= (points[.rightShoulder]?.confidence ?? 0) + (points[.rightHip]?.confidence ?? 0) + (points[.rightAnkle]?.confidence ?? 0)
+        let lPlConf: Float = (points[.leftShoulder]?.confidence ?? 0) + (points[.leftHip]?.confidence ?? 0) + (points[.leftAnkle]?.confidence ?? 0)
+        let rPlConf: Float = (points[.rightShoulder]?.confidence ?? 0) + (points[.rightHip]?.confidence ?? 0) + (points[.rightAnkle]?.confidence ?? 0)
+        let useLeft = lPlConf >= rPlConf
         let shK: VNHumanBodyPoseObservation.JointName = useLeft ? .leftShoulder : .rightShoulder
         let hpK: VNHumanBodyPoseObservation.JointName = useLeft ? .leftHip : .rightHip
         let anK: VNHumanBodyPoseObservation.JointName = useLeft ? .leftAnkle : .rightAnkle
@@ -274,7 +297,9 @@ final class PlankViewModel: NSObject, ObservableObject, AVCaptureVideoDataOutput
         for j in [shK, hpK, anK] {
             guard let p = points[j], p.confidence > 0.35 else { r.issue = .notVisible; DispatchQueue.main.async { self.result = r }; return }
         }
-        let sh = points[shK]!.location, hp = points[hpK]!.location, an = points[anK]!.location
+        let sh = points[shK]!.location
+        let hp = points[hpK]!.location
+        let an = points[anK]!.location
         // body line angle: hip should be between shoulder and ankle height-wise
         r.bodyAngle = calcAngle(first: sh, middle: hp, last: an)
         r.hipHeight = hp.y  // normalized 0-1
@@ -347,9 +372,10 @@ final class PlankViewModel: NSObject, ObservableObject, AVCaptureVideoDataOutput
 
 struct PlankCameraView: View {
     @StateObject private var vm = PlankViewModel()
-    var body: some View {
+    var body: some View { plankUI }
+    @ViewBuilder private var plankUI: some View {
         ZStack {
-            CameraPreview(session: vm.session).ignoresSafeArea()
+            ExerciseSessionPreview(session: vm.session).ignoresSafeArea()
             SimpleSkeleton(bodyPoints: vm.bodyPoints, joints: [.leftShoulder,.rightShoulder,.leftHip,.rightHip,.leftAnkle,.rightAnkle], isOk: vm.result.bodyOk)
                 .ignoresSafeArea()
             VStack {
@@ -507,8 +533,9 @@ final class PushUpViewModel: NSObject, ObservableObject, AVCaptureVideoDataOutpu
     }
     private func analyze(_ points: [VNHumanBodyPoseObservation.JointName: VNRecognizedPoint]) {
         var r = PushUpResult()
-        let useLeft = (points[.leftShoulder]?.confidence ?? 0) + (points[.leftElbow]?.confidence ?? 0) + (points[.leftWrist]?.confidence ?? 0)
-                   >= (points[.rightShoulder]?.confidence ?? 0) + (points[.rightElbow]?.confidence ?? 0) + (points[.rightWrist]?.confidence ?? 0)
+        let lConf: Float = (points[.leftShoulder]?.confidence ?? 0) + (points[.leftElbow]?.confidence ?? 0) + (points[.leftWrist]?.confidence ?? 0)
+        let rConf: Float = (points[.rightShoulder]?.confidence ?? 0) + (points[.rightElbow]?.confidence ?? 0) + (points[.rightWrist]?.confidence ?? 0)
+        let useLeft = lConf >= rConf
         let shK: VNHumanBodyPoseObservation.JointName = useLeft ? .leftShoulder : .rightShoulder
         let elK: VNHumanBodyPoseObservation.JointName = useLeft ? .leftElbow    : .rightElbow
         let wrK: VNHumanBodyPoseObservation.JointName = useLeft ? .leftWrist    : .rightWrist
@@ -517,7 +544,9 @@ final class PushUpViewModel: NSObject, ObservableObject, AVCaptureVideoDataOutpu
         for j in [shK, elK, wrK] {
             guard let p = points[j], p.confidence > 0.35 else { r.issue = .notVisible; DispatchQueue.main.async { self.result = r }; return }
         }
-        let sh = points[shK]!.location, el = points[elK]!.location, wr = points[wrK]!.location
+        let sh = points[shK]!.location
+        let el = points[elK]!.location
+        let wr = points[wrK]!.location
         r.elbowAngle = calcAngle(first: sh, middle: el, last: wr)
         // Body line check
         if let hp = points[hpK], hp.confidence > 0.3, let an = points[anK], an.confidence > 0.3 {
@@ -605,59 +634,70 @@ final class PushUpViewModel: NSObject, ObservableObject, AVCaptureVideoDataOutpu
 
 struct PushUpCameraView: View {
     @StateObject private var vm = PushUpViewModel()
-    var body: some View {
+    var body: some View { pushUpUI }
+    @ViewBuilder private var pushUpUI: some View {
         ZStack {
-            CameraPreview(session: vm.session).ignoresSafeArea()
+            ExerciseSessionPreview(session: vm.session).ignoresSafeArea()
             SimpleSkeleton(bodyPoints: vm.bodyPoints,
                            joints: [.leftShoulder,.rightShoulder,.leftElbow,.rightElbow,.leftWrist,.rightWrist,.leftHip,.rightHip],
                            isOk: vm.result.bodyOk && vm.result.elbowOk)
                 .ignoresSafeArea()
             VStack {
-                HStack {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Push-Up AI").font(.title2.bold()).foregroundColor(.white)
-                        Text("Real-Time Form Check").font(.caption).foregroundColor(.white.opacity(0.7))
-                    }
-                    Spacer()
-                    Button { vm.switchCamera() } label: {
-                        Image(systemName: "camera.rotate").font(.title2).foregroundColor(.white)
-                            .padding(12).background(Color.white.opacity(0.2)).clipShape(Circle())
-                    }
-                    ScoreRing(score: vm.result.postureScore)
-                }
-                .padding().background(.black.opacity(0.65)).cornerRadius(20).padding()
+                pushUpTopBar
                 Spacer()
-                if vm.showAlert { LiveFormBanner(message: vm.alertMessage).transition(.move(edge: .top).combined(with: .opacity)) }
-                Spacer()
-                VStack(spacing: 18) {
-                    Text(vm.result.issue.rawValue).font(.title2.bold()).foregroundColor(.white).multilineTextAlignment(.center)
-                    HStack(spacing: 12) {
-                        LiveAngleCard(title: "Elbow", angle: vm.result.elbowAngle, isOk: vm.result.elbowOk, idealRange: "< 95°")
-                        LiveAngleCard(title: "Body Line", angle: vm.result.bodyAngle, isOk: vm.result.bodyOk, idealRange: "> 155°")
-                    }
-                    HStack(spacing: 50) {
-                        VStack {
-                            Text("\(vm.reps)").font(.system(size: 50, weight: .bold)).foregroundColor(.white)
-                            Text("REPS").foregroundColor(.white.opacity(0.7))
-                        }
-                        VStack {
-                            Text(vm.phaseText).font(.title3.bold()).foregroundColor(vm.phaseColor)
-                            Text("PHASE").foregroundColor(.white.opacity(0.7))
-                        }
-                        Button { vm.resetReps() } label: {
-                            VStack {
-                                Image(systemName: "arrow.counterclockwise").font(.title2).foregroundColor(.white)
-                                Text("RESET").foregroundColor(.white.opacity(0.7))
-                            }
-                        }
-                    }
+                if vm.showAlert {
+                    LiveFormBanner(message: vm.alertMessage)
+                        .transition(.move(edge: .top).combined(with: .opacity))
                 }
-                .padding().background(.black.opacity(0.75)).cornerRadius(22).padding()
+                Spacer()
+                pushUpBottomPanel
             }
             if vm.showBadRepFlash { BadRepFlash(reason: vm.badRepReason) }
         }
-        .onAppear { vm.start() }.onDisappear { vm.stop() }
+        .onAppear { vm.start() }
+        .onDisappear { vm.stop() }
         .animation(.spring(response: 0.4), value: vm.showAlert)
+    }
+    private var pushUpTopBar: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Push-Up AI").font(.title2.bold()).foregroundColor(.white)
+                Text("Real-Time Form Check").font(.caption).foregroundColor(.white.opacity(0.7))
+            }
+            Spacer()
+            Button { vm.switchCamera() } label: {
+                Image(systemName: "camera.rotate").font(.title2).foregroundColor(.white)
+                    .padding(12).background(Color.white.opacity(0.2)).clipShape(Circle())
+            }
+            ScoreRing(score: vm.result.postureScore)
+        }
+        .padding().background(.black.opacity(0.65)).cornerRadius(20).padding()
+    }
+    private var pushUpBottomPanel: some View {
+        VStack(spacing: 18) {
+            Text(vm.result.issue.rawValue).font(.title2.bold()).foregroundColor(.white).multilineTextAlignment(.center)
+            HStack(spacing: 12) {
+                LiveAngleCard(title: "Elbow", angle: vm.result.elbowAngle, isOk: vm.result.elbowOk, idealRange: "< 95°")
+                LiveAngleCard(title: "Body Line", angle: vm.result.bodyAngle, isOk: vm.result.bodyOk, idealRange: "> 155°")
+            }
+            HStack(spacing: 50) {
+                VStack {
+                    Text("\(vm.reps)").font(.system(size: 50, weight: .bold)).foregroundColor(.white)
+                    Text("REPS").foregroundColor(.white.opacity(0.7))
+                }
+                VStack {
+                    Text(vm.phaseText).font(.title3.bold()).foregroundColor(vm.phaseColor)
+                    Text("PHASE").foregroundColor(.white.opacity(0.7))
+                }
+                Button { vm.resetReps() } label: {
+                    VStack {
+                        Image(systemName: "arrow.counterclockwise").font(.title2).foregroundColor(.white)
+                        Text("RESET").foregroundColor(.white.opacity(0.7))
+                    }
+                }
+            }
+        }
+        .padding().background(.black.opacity(0.75)).cornerRadius(22).padding()
     }
 }
 
@@ -766,8 +806,9 @@ final class LungeViewModel: NSObject, ObservableObject, AVCaptureVideoDataOutput
     }
     private func analyze(_ points: [VNHumanBodyPoseObservation.JointName: VNRecognizedPoint]) {
         var r = LungeResult()
-        let useLeft = (points[.leftHip]?.confidence ?? 0) + (points[.leftKnee]?.confidence ?? 0) + (points[.leftAnkle]?.confidence ?? 0)
-                   >= (points[.rightHip]?.confidence ?? 0) + (points[.rightKnee]?.confidence ?? 0) + (points[.rightAnkle]?.confidence ?? 0)
+        let lLegConf: Float = (points[.leftHip]?.confidence ?? 0) + (points[.leftKnee]?.confidence ?? 0) + (points[.leftAnkle]?.confidence ?? 0)
+        let rLegConf: Float = (points[.rightHip]?.confidence ?? 0) + (points[.rightKnee]?.confidence ?? 0) + (points[.rightAnkle]?.confidence ?? 0)
+        let useLeft = lLegConf >= rLegConf
         let shK: VNHumanBodyPoseObservation.JointName = useLeft ? .leftShoulder : .rightShoulder
         let hpK: VNHumanBodyPoseObservation.JointName = useLeft ? .leftHip      : .rightHip
         let knK: VNHumanBodyPoseObservation.JointName = useLeft ? .leftKnee     : .rightKnee
@@ -775,7 +816,9 @@ final class LungeViewModel: NSObject, ObservableObject, AVCaptureVideoDataOutput
         for j in [hpK, knK, anK] {
             guard let p = points[j], p.confidence > 0.35 else { r.issue = .notVisible; DispatchQueue.main.async { self.result = r }; return }
         }
-        let hp = points[hpK]!.location, kn = points[knK]!.location, an = points[anK]!.location
+        let hp = points[hpK]!.location
+        let kn = points[knK]!.location
+        let an = points[anK]!.location
         r.kneeAngle = calcAngle(first: hp, middle: kn, last: an)
         if let sh = points[shK], sh.confidence > 0.3 {
             r.hipAngle = calcAngle(first: sh.location, middle: hp, last: kn)
@@ -866,59 +909,67 @@ final class LungeViewModel: NSObject, ObservableObject, AVCaptureVideoDataOutput
 
 struct LungeCameraView: View {
     @StateObject private var vm = LungeViewModel()
-    var body: some View {
+    var body: some View { lungeUI }
+@ViewBuilder private var lungeTopBar: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Lunge AI").font(.title2.bold()).foregroundColor(.white)
+                Text("Real-Time Form Check").font(.caption).foregroundColor(.white.opacity(0.7))
+            }
+            Spacer()
+            Button { vm.switchCamera() } label: {
+                Image(systemName: "camera.rotate").font(.title2).foregroundColor(.white)
+                    .padding(12).background(Color.white.opacity(0.2)).clipShape(Circle())
+            }
+            ScoreRing(score: vm.result.postureScore)
+        }
+        .padding().background(.black.opacity(0.65)).cornerRadius(20).padding()
+    }
+    @ViewBuilder private var lungeBottomPanel: some View {
+        VStack(spacing: 18) {
+            Text(vm.result.issue.rawValue).font(.title2.bold()).foregroundColor(.white).multilineTextAlignment(.center)
+            HStack(spacing: 12) {
+                LiveAngleCard(title: "Knee", angle: vm.result.kneeAngle, isOk: vm.result.hipOk, idealRange: "< 105°")
+                LiveAngleCard(title: "Torso", angle: vm.result.torsoAngle, isOk: vm.result.torsoOk, idealRange: "> 60°")
+            }
+            HStack(spacing: 50) {
+                VStack {
+                    Text("\(vm.reps)").font(.system(size: 50, weight: .bold)).foregroundColor(.white)
+                    Text("REPS").foregroundColor(.white.opacity(0.7))
+                }
+                VStack {
+                    Text(vm.phaseText).font(.title3.bold()).foregroundColor(vm.phaseColor)
+                    Text("PHASE").foregroundColor(.white.opacity(0.7))
+                }
+                Button { vm.resetReps() } label: {
+                    VStack {
+                        Image(systemName: "arrow.counterclockwise").font(.title2).foregroundColor(.white)
+                        Text("RESET").foregroundColor(.white.opacity(0.7))
+                    }
+                }
+            }
+        }
+        .padding().background(.black.opacity(0.75)).cornerRadius(22).padding()
+    }
+    @ViewBuilder private var lungeUI: some View {
         ZStack {
-            CameraPreview(session: vm.session).ignoresSafeArea()
+            ExerciseSessionPreview(session: vm.session).ignoresSafeArea()
             SimpleSkeleton(bodyPoints: vm.bodyPoints, joints: [.leftHip,.rightHip,.leftKnee,.rightKnee,.leftAnkle,.rightAnkle], isOk: vm.result.kneeOk && vm.result.torsoOk).ignoresSafeArea()
             VStack {
-                HStack {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Lunge AI").font(.title2.bold()).foregroundColor(.white)
-                        Text("Real-Time Form Check").font(.caption).foregroundColor(.white.opacity(0.7))
-                    }
-                    Spacer()
-                    Button { vm.switchCamera() } label: {
-                        Image(systemName: "camera.rotate").font(.title2).foregroundColor(.white)
-                            .padding(12).background(Color.white.opacity(0.2)).clipShape(Circle())
-                    }
-                    ScoreRing(score: vm.result.postureScore)
-                }
-                .padding().background(.black.opacity(0.65)).cornerRadius(20).padding()
+                lungeTopBar
                 Spacer()
                 if vm.showAlert { LiveFormBanner(message: vm.alertMessage).transition(.move(edge: .top).combined(with: .opacity)) }
                 Spacer()
-                VStack(spacing: 18) {
-                    Text(vm.result.issue.rawValue).font(.title2.bold()).foregroundColor(.white).multilineTextAlignment(.center)
-                    HStack(spacing: 12) {
-                        LiveAngleCard(title: "Knee", angle: vm.result.kneeAngle, isOk: vm.result.hipOk, idealRange: "< 105°")
-                        LiveAngleCard(title: "Torso", angle: vm.result.torsoAngle, isOk: vm.result.torsoOk, idealRange: "> 60°")
-                    }
-                    HStack(spacing: 50) {
-                        VStack {
-                            Text("\(vm.reps)").font(.system(size: 50, weight: .bold)).foregroundColor(.white)
-                            Text("REPS").foregroundColor(.white.opacity(0.7))
-                        }
-                        VStack {
-                            Text(vm.phaseText).font(.title3.bold()).foregroundColor(vm.phaseColor)
-                            Text("PHASE").foregroundColor(.white.opacity(0.7))
-                        }
-                        Button { vm.resetReps() } label: {
-                            VStack {
-                                Image(systemName: "arrow.counterclockwise").font(.title2).foregroundColor(.white)
-                                Text("RESET").foregroundColor(.white.opacity(0.7))
-                            }
-                        }
-                    }
-                }
-                .padding().background(.black.opacity(0.75)).cornerRadius(22).padding()
+                lungeBottomPanel
             }
             if vm.showBadRepFlash { BadRepFlash(reason: vm.badRepReason) }
         }
-        .onAppear { vm.start() }.onDisappear { vm.stop() }
+        .onAppear { vm.start() }
+        .onDisappear { vm.stop() }
         .animation(.spring(response: 0.4), value: vm.showAlert)
     }
-}
 
+}
 // ─────────────────────────────────────────────────────────────────────────────
 // MARK: - GLUTE BRIDGE
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1016,8 +1067,9 @@ final class GluteBridgeViewModel: NSObject, ObservableObject, AVCaptureVideoData
     }
     private func analyze(_ points: [VNHumanBodyPoseObservation.JointName: VNRecognizedPoint]) {
         var r = GluteBridgeResult()
-        let useLeft = (points[.leftHip]?.confidence ?? 0) + (points[.leftKnee]?.confidence ?? 0) + (points[.leftAnkle]?.confidence ?? 0)
-                   >= (points[.rightHip]?.confidence ?? 0) + (points[.rightKnee]?.confidence ?? 0) + (points[.rightAnkle]?.confidence ?? 0)
+        let lLegConf: Float = (points[.leftHip]?.confidence ?? 0) + (points[.leftKnee]?.confidence ?? 0) + (points[.leftAnkle]?.confidence ?? 0)
+        let rLegConf: Float = (points[.rightHip]?.confidence ?? 0) + (points[.rightKnee]?.confidence ?? 0) + (points[.rightAnkle]?.confidence ?? 0)
+        let useLeft = lLegConf >= rLegConf
         let shK: VNHumanBodyPoseObservation.JointName = useLeft ? .leftShoulder : .rightShoulder
         let hpK: VNHumanBodyPoseObservation.JointName = useLeft ? .leftHip      : .rightHip
         let knK: VNHumanBodyPoseObservation.JointName = useLeft ? .leftKnee     : .rightKnee
@@ -1025,7 +1077,9 @@ final class GluteBridgeViewModel: NSObject, ObservableObject, AVCaptureVideoData
         for j in [hpK, knK, anK] {
             guard let p = points[j], p.confidence > 0.35 else { r.issue = .notVisible; DispatchQueue.main.async { self.result = r }; return }
         }
-        let hp = points[hpK]!.location, kn = points[knK]!.location, an = points[anK]!.location
+        let hp = points[hpK]!.location
+        let kn = points[knK]!.location
+        let an = points[anK]!.location
         r.kneeAngle = calcAngle(first: hp, middle: kn, last: an)
         if let sh = points[shK], sh.confidence > 0.3 {
             r.hipAngle = calcAngle(first: sh.location, middle: hp, last: kn)
@@ -1094,58 +1148,66 @@ final class GluteBridgeViewModel: NSObject, ObservableObject, AVCaptureVideoData
 
 struct GluteBridgeCameraView: View {
     @StateObject private var vm = GluteBridgeViewModel()
-    var body: some View {
+    var body: some View { gluteBridgeUI }
+    @ViewBuilder private var gluteTopBar: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Glute Bridge AI").font(.title2.bold()).foregroundColor(.white)
+                Text("Drive Those Hips!").font(.caption).foregroundColor(.white.opacity(0.7))
+            }
+            Spacer()
+            Button { vm.switchCamera() } label: {
+                Image(systemName: "camera.rotate").font(.title2).foregroundColor(.white)
+                    .padding(12).background(Color.white.opacity(0.2)).clipShape(Circle())
+            }
+            ScoreRing(score: vm.result.postureScore)
+        }
+        .padding().background(.black.opacity(0.65)).cornerRadius(20).padding()
+    }
+    @ViewBuilder private var gluteBottomPanel: some View {
+        VStack(spacing: 18) {
+            Text(vm.result.issue.rawValue).font(.title2.bold()).foregroundColor(.white).multilineTextAlignment(.center)
+            HStack(spacing: 12) {
+                LiveAngleCard(title: "Hip Ext.", angle: vm.result.hipAngle, isOk: vm.result.hipOk, idealRange: "< 155°")
+                LiveAngleCard(title: "Knee", angle: vm.result.kneeAngle, isOk: vm.result.kneeOk, idealRange: "80°-110°")
+            }
+            HStack(spacing: 50) {
+                VStack {
+                    Text("\(vm.reps)").font(.system(size: 50, weight: .bold)).foregroundColor(.white)
+                    Text("REPS").foregroundColor(.white.opacity(0.7))
+                }
+                VStack {
+                    Text(vm.phaseText).font(.title3.bold()).foregroundColor(vm.phaseColor)
+                    Text("PHASE").foregroundColor(.white.opacity(0.7))
+                }
+                Button { vm.resetReps() } label: {
+                    VStack {
+                        Image(systemName: "arrow.counterclockwise").font(.title2).foregroundColor(.white)
+                        Text("RESET").foregroundColor(.white.opacity(0.7))
+                    }
+                }
+            }
+        }
+        .padding().background(.black.opacity(0.75)).cornerRadius(22).padding()
+    }
+    @ViewBuilder private var gluteBridgeUI: some View {
         ZStack {
-            CameraPreview(session: vm.session).ignoresSafeArea()
+            ExerciseSessionPreview(session: vm.session).ignoresSafeArea()
             SimpleSkeleton(bodyPoints: vm.bodyPoints, joints: [.leftHip,.rightHip,.leftKnee,.rightKnee,.leftAnkle,.rightAnkle,.leftShoulder,.rightShoulder], isOk: vm.result.hipOk).ignoresSafeArea()
             VStack {
-                HStack {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Glute Bridge AI").font(.title2.bold()).foregroundColor(.white)
-                        Text("Drive Those Hips!").font(.caption).foregroundColor(.white.opacity(0.7))
-                    }
-                    Spacer()
-                    Button { vm.switchCamera() } label: {
-                        Image(systemName: "camera.rotate").font(.title2).foregroundColor(.white)
-                            .padding(12).background(Color.white.opacity(0.2)).clipShape(Circle())
-                    }
-                    ScoreRing(score: vm.result.postureScore)
-                }
-                .padding().background(.black.opacity(0.65)).cornerRadius(20).padding()
+                gluteTopBar
                 Spacer()
                 if vm.showAlert { LiveFormBanner(message: vm.alertMessage).transition(.move(edge: .top).combined(with: .opacity)) }
                 Spacer()
-                VStack(spacing: 18) {
-                    Text(vm.result.issue.rawValue).font(.title2.bold()).foregroundColor(.white).multilineTextAlignment(.center)
-                    HStack(spacing: 12) {
-                        LiveAngleCard(title: "Hip Ext.", angle: vm.result.hipAngle, isOk: vm.result.hipOk, idealRange: "< 155°")
-                        LiveAngleCard(title: "Knee", angle: vm.result.kneeAngle, isOk: vm.result.kneeOk, idealRange: "80°-110°")
-                    }
-                    HStack(spacing: 50) {
-                        VStack {
-                            Text("\(vm.reps)").font(.system(size: 50, weight: .bold)).foregroundColor(.white)
-                            Text("REPS").foregroundColor(.white.opacity(0.7))
-                        }
-                        VStack {
-                            Text(vm.phaseText).font(.title3.bold()).foregroundColor(vm.phaseColor)
-                            Text("PHASE").foregroundColor(.white.opacity(0.7))
-                        }
-                        Button { vm.resetReps() } label: {
-                            VStack {
-                                Image(systemName: "arrow.counterclockwise").font(.title2).foregroundColor(.white)
-                                Text("RESET").foregroundColor(.white.opacity(0.7))
-                            }
-                        }
-                    }
-                }
-                .padding().background(.black.opacity(0.75)).cornerRadius(22).padding()
+                gluteBottomPanel
             }
         }
-        .onAppear { vm.start() }.onDisappear { vm.stop() }
+        .onAppear { vm.start() }
+        .onDisappear { vm.stop() }
         .animation(.spring(response: 0.4), value: vm.showAlert)
     }
-}
 
+}
 // ─────────────────────────────────────────────────────────────────────────────
 // MARK: - MOUNTAIN CLIMBER
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1238,7 +1300,9 @@ final class MCViewModel: NSObject, ObservableObject, AVCaptureVideoDataOutputSam
         for j in [shK, hpK, anK] {
             guard let p = points[j], p.confidence > 0.35 else { r.issue = .notVisible; DispatchQueue.main.async { self.result = r }; return }
         }
-        let sh = points[shK]!.location, hp = points[hpK]!.location, an = points[anK]!.location
+        let sh = points[shK]!.location
+        let hp = points[hpK]!.location
+        let an = points[anK]!.location
         r.hipAngle = calcAngle(first: sh, middle: hp, last: an)
         r.hipOk = r.hipAngle >= 155  // body should be near straight
 
@@ -1290,65 +1354,63 @@ final class MCViewModel: NSObject, ObservableObject, AVCaptureVideoDataOutputSam
 
 struct MountainClimberCameraView: View {
     @StateObject private var vm = MCViewModel()
-    var body: some View {
+    var body: some View { mountainClimberUI }
+    @ViewBuilder private var mcTopBar: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Mountain Climber AI").font(.title2.bold()).foregroundColor(.white)
+                Text("Keep Hips Level — Drive Knees!").font(.caption).foregroundColor(.white.opacity(0.7))
+            }
+            Spacer()
+            Button { vm.switchCamera() } label: {
+                Image(systemName: "camera.rotate").font(.title2).foregroundColor(.white)
+                    .padding(12).background(Color.white.opacity(0.2)).clipShape(Circle())
+            }
+            ScoreRing(score: vm.result.postureScore)
+        }
+        .padding().background(.black.opacity(0.65)).cornerRadius(20).padding()
+    }
+    @ViewBuilder private var mcBottomPanel: some View {
+        VStack(spacing: 18) {
+            Text(vm.result.issue.rawValue).font(.title2.bold()).foregroundColor(.white).multilineTextAlignment(.center)
+            LiveAngleCard(title: "Body Line", angle: vm.result.hipAngle, isOk: vm.result.hipOk, idealRange: "> 155°")
+            HStack(spacing: 50) {
+                VStack {
+                    Text("\(vm.reps)").font(.system(size: 50, weight: .bold)).foregroundColor(.white)
+                    Text("REPS").foregroundColor(.white.opacity(0.7))
+                }
+                VStack {
+                    Text(vm.result.hipOk ? "Form OK ✅" : "Fix Form").font(.title3.bold()).foregroundColor(vm.result.hipOk ? Color.green : Color.red)
+                    Text("STATUS").foregroundColor(.white.opacity(0.7))
+                }
+                Button { vm.resetReps() } label: {
+                    VStack {
+                        Image(systemName: "arrow.counterclockwise").font(.title2).foregroundColor(.white)
+                        Text("RESET").foregroundColor(.white.opacity(0.7))
+                    }
+                }
+            }
+        }
+        .padding().background(.black.opacity(0.75)).cornerRadius(22).padding()
+    }
+    @ViewBuilder private var mountainClimberUI: some View {
         ZStack {
-            CameraPreview(session: vm.session).ignoresSafeArea()
+            ExerciseSessionPreview(session: vm.session).ignoresSafeArea()
             SimpleSkeleton(bodyPoints: vm.bodyPoints, joints: [.leftShoulder,.rightShoulder,.leftHip,.rightHip,.leftKnee,.rightKnee,.leftAnkle,.rightAnkle], isOk: vm.result.hipOk).ignoresSafeArea()
             VStack {
-                HStack {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Mountain Climber AI").font(.title2.bold()).foregroundColor(.white)
-                        Text("Keep Hips Level — Drive Knees!").font(.caption).foregroundColor(.white.opacity(0.7))
-                    }
-                    Spacer()
-                    Button { vm.switchCamera() } label: {
-                        Image(systemName: "camera.rotate").font(.title2).foregroundColor(.white)
-                            .padding(12).background(Color.white.opacity(0.2)).clipShape(Circle())
-                    }
-                    ScoreRing(score: vm.result.postureScore)
-                }
-                .padding().background(.black.opacity(0.65)).cornerRadius(20).padding()
+                mcTopBar
                 Spacer()
                 if vm.showAlert { LiveFormBanner(message: vm.alertMessage).transition(.move(edge: .top).combined(with: .opacity)) }
                 Spacer()
-                VStack(spacing: 18) {
-                    Text(vm.result.issue.rawValue).font(.title2.bold()).foregroundColor(.white).multilineTextAlignment(.center)
-                    HStack(spacing: 12) {
-                        LiveAngleCard(title: "Body Line", angle: vm.result.hipAngle, isOk: vm.result.hipOk, idealRange: "> 155°")
-                        VStack(spacing: 5) {
-                            Text("Knee Drive").font(.caption).foregroundColor(.white.opacity(0.7))
-                            Image(systemName: vm.result.driveOk ? "checkmark.circle.fill" : "xmark.circle.fill")
-                                .font(.title2).foregroundColor(vm.result.driveOk ? .green : .red)
-                        }
-                        .frame(maxWidth: .infinity).padding(.vertical, 10)
-                        .background(vm.result.driveOk ? Color.green.opacity(0.15) : Color.red.opacity(0.15))
-                        .cornerRadius(12)
-                    }
-                    HStack(spacing: 50) {
-                        VStack {
-                            Text("\(vm.reps)").font(.system(size: 50, weight: .bold)).foregroundColor(.white)
-                            Text("REPS").foregroundColor(.white.opacity(0.7))
-                        }
-                        VStack {
-                            Text(vm.result.hipOk ? "Form OK ✅" : "Fix Form").font(.title3.bold()).foregroundColor(vm.result.hipOk ? .green : .red)
-                            Text("STATUS").foregroundColor(.white.opacity(0.7))
-                        }
-                        Button { vm.resetReps() } label: {
-                            VStack {
-                                Image(systemName: "arrow.counterclockwise").font(.title2).foregroundColor(.white)
-                                Text("RESET").foregroundColor(.white.opacity(0.7))
-                            }
-                        }
-                    }
-                }
-                .padding().background(.black.opacity(0.75)).cornerRadius(22).padding()
+                mcBottomPanel
             }
         }
-        .onAppear { vm.start() }.onDisappear { vm.stop() }
+        .onAppear { vm.start() }
+        .onDisappear { vm.stop() }
         .animation(.spring(response: 0.4), value: vm.showAlert)
     }
-}
 
+}
 // ─────────────────────────────────────────────────────────────────────────────
 // MARK: - HIGH KNEES
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1498,66 +1560,63 @@ final class HighKneesViewModel: NSObject, ObservableObject, AVCaptureVideoDataOu
 
 struct HighKneesCameraView: View {
     @StateObject private var vm = HighKneesViewModel()
-    var body: some View {
+    var body: some View { highKneesUI }
+    @ViewBuilder private var hkTopBar: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("High Knees AI").font(.title2.bold()).foregroundColor(.white)
+                Text("Drive Knees to Hip Height").font(.caption).foregroundColor(.white.opacity(0.7))
+            }
+            Spacer()
+            Button { vm.switchCamera() } label: {
+                Image(systemName: "camera.rotate").font(.title2).foregroundColor(.white)
+                    .padding(12).background(Color.white.opacity(0.2)).clipShape(Circle())
+            }
+            ScoreRing(score: vm.result.postureScore)
+        }
+        .padding().background(.black.opacity(0.65)).cornerRadius(20).padding()
+    }
+    @ViewBuilder private var hkBottomPanel: some View {
+        VStack(spacing: 18) {
+            Text(vm.result.issue.rawValue).font(.title2.bold()).foregroundColor(.white).multilineTextAlignment(.center)
+            LiveAngleCard(title: "Torso", angle: vm.result.torsoAngle, isOk: vm.result.torsoOk, idealRange: "> 55°")
+            HStack(spacing: 50) {
+                VStack {
+                    Text("\(vm.reps)").font(.system(size: 50, weight: .bold)).foregroundColor(.white)
+                    Text("REPS").foregroundColor(.white.opacity(0.7))
+                }
+                VStack {
+                    Text(vm.result.kneeOk ? "Great ✅" : "Fix Form").font(.title3.bold()).foregroundColor(vm.result.kneeOk ? Color.green : Color.red)
+                    Text("STATUS").foregroundColor(.white.opacity(0.7))
+                }
+                Button { vm.resetReps() } label: {
+                    VStack {
+                        Image(systemName: "arrow.counterclockwise").font(.title2).foregroundColor(.white)
+                        Text("RESET").foregroundColor(.white.opacity(0.7))
+                    }
+                }
+            }
+        }
+        .padding().background(.black.opacity(0.75)).cornerRadius(22).padding()
+    }
+    @ViewBuilder private var highKneesUI: some View {
         ZStack {
-            CameraPreview(session: vm.session).ignoresSafeArea()
+            ExerciseSessionPreview(session: vm.session).ignoresSafeArea()
             SimpleSkeleton(bodyPoints: vm.bodyPoints, joints: [.leftHip,.rightHip,.leftKnee,.rightKnee,.leftAnkle,.rightAnkle], isOk: vm.result.kneeOk && vm.result.torsoOk).ignoresSafeArea()
             VStack {
-                HStack {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("High Knees AI").font(.title2.bold()).foregroundColor(.white)
-                        Text("Drive Knees to Hip Height").font(.caption).foregroundColor(.white.opacity(0.7))
-                    }
-                    Spacer()
-                    Button { vm.switchCamera() } label: {
-                        Image(systemName: "camera.rotate").font(.title2).foregroundColor(.white)
-                            .padding(12).background(Color.white.opacity(0.2)).clipShape(Circle())
-                    }
-                    ScoreRing(score: vm.result.postureScore)
-                }
-                .padding().background(.black.opacity(0.65)).cornerRadius(20).padding()
+                hkTopBar
                 Spacer()
                 if vm.showAlert { LiveFormBanner(message: vm.alertMessage).transition(.move(edge: .top).combined(with: .opacity)) }
                 Spacer()
-                VStack(spacing: 18) {
-                    Text(vm.result.issue.rawValue).font(.title2.bold()).foregroundColor(.white).multilineTextAlignment(.center)
-                    HStack(spacing: 12) {
-                        LiveAngleCard(title: "Torso", angle: vm.result.torsoAngle, isOk: vm.result.torsoOk, idealRange: "> 55°")
-                        VStack(spacing: 5) {
-                            Text("Knee Height").font(.caption).foregroundColor(.white.opacity(0.7))
-                            Text(vm.result.kneeOk ? "✅ Good" : "❌ Too Low")
-                                .font(.headline.bold()).foregroundColor(vm.result.kneeOk ? .green : .red)
-                            Text("> Hip Level").font(.caption2).foregroundColor(.white.opacity(0.5))
-                        }
-                        .frame(maxWidth: .infinity).padding(.vertical, 10)
-                        .background(vm.result.kneeOk ? Color.green.opacity(0.15) : Color.red.opacity(0.15))
-                        .cornerRadius(12)
-                    }
-                    HStack(spacing: 50) {
-                        VStack {
-                            Text("\(vm.reps)").font(.system(size: 50, weight: .bold)).foregroundColor(.white)
-                            Text("REPS").foregroundColor(.white.opacity(0.7))
-                        }
-                        VStack {
-                            Text(vm.result.kneeOk ? "Great ✅" : "Fix Form").font(.title3.bold()).foregroundColor(vm.result.kneeOk ? .green : .red)
-                            Text("STATUS").foregroundColor(.white.opacity(0.7))
-                        }
-                        Button { vm.resetReps() } label: {
-                            VStack {
-                                Image(systemName: "arrow.counterclockwise").font(.title2).foregroundColor(.white)
-                                Text("RESET").foregroundColor(.white.opacity(0.7))
-                            }
-                        }
-                    }
-                }
-                .padding().background(.black.opacity(0.75)).cornerRadius(22).padding()
+                hkBottomPanel
             }
         }
-        .onAppear { vm.start() }.onDisappear { vm.stop() }
+        .onAppear { vm.start() }
+        .onDisappear { vm.stop() }
         .animation(.spring(response: 0.4), value: vm.showAlert)
     }
-}
 
+}
 // ─────────────────────────────────────────────────────────────────────────────
 // MARK: - SHARED SKELETON OVERLAY
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1576,29 +1635,56 @@ struct SimpleSkeleton: View {
         (.rightHip, .rightKnee), (.rightKnee, .rightAnkle)
     ]
 
-    var body: some View {
+    // Split into sub-views to avoid type-check timeout
+    var body: some View { skeletonCanvas }
+
+    @ViewBuilder private var skeletonCanvas: some View {
         GeometryReader { geo in
             ZStack {
-                ForEach(Array(connections.enumerated()), id: \.offset) { _, conn in
-                    if let p1 = bodyPoints[conn.0], let p2 = bodyPoints[conn.1] {
-                        Path { path in
-                            path.move(to: CGPoint(x: p1.x * geo.size.width, y: p1.y * geo.size.height))
-                            path.addLine(to: CGPoint(x: p2.x * geo.size.width, y: p2.y * geo.size.height))
-                        }
-                        .stroke(isOk ? Color.green : Color.red,
-                                style: StrokeStyle(lineWidth: 4, lineCap: .round))
-                    }
-                }
-                ForEach(Array(bodyPoints.keys), id: \.self) { joint in
-                    if let pt = bodyPoints[joint] {
-                        Circle()
-                            .fill(isOk ? Color.green : Color.red)
-                            .frame(width: 12, height: 12)
-                            .overlay(Circle().stroke(Color.white.opacity(0.6), lineWidth: 1.5))
-                            .position(x: pt.x * geo.size.width, y: pt.y * geo.size.height)
-                    }
-                }
+                bonesLayer(geo: geo)
+                jointsLayer(geo: geo)
             }
+        }
+    }
+
+    @ViewBuilder private func bonesLayer(geo: GeometryProxy) -> some View {
+        ForEach(Array(connections.enumerated()), id: \.offset) { _, conn in
+            boneView(conn: conn, geo: geo)
+        }
+    }
+
+    @ViewBuilder private func boneView(
+        conn: (VNHumanBodyPoseObservation.JointName, VNHumanBodyPoseObservation.JointName),
+        geo: GeometryProxy
+    ) -> some View {
+        if let p1 = bodyPoints[conn.0], let p2 = bodyPoints[conn.1] {
+            let start = CGPoint(x: p1.x * geo.size.width, y: p1.y * geo.size.height)
+            let end   = CGPoint(x: p2.x * geo.size.width, y: p2.y * geo.size.height)
+            Path { path in
+                path.move(to: start)
+                path.addLine(to: end)
+            }
+            .stroke(isOk ? Color.green : Color.red,
+                    style: StrokeStyle(lineWidth: 4, lineCap: .round))
+        }
+    }
+
+    @ViewBuilder private func jointsLayer(geo: GeometryProxy) -> some View {
+        ForEach(Array(bodyPoints.keys), id: \.self) { joint in
+            jointDot(joint: joint, geo: geo)
+        }
+    }
+
+    @ViewBuilder private func jointDot(
+        joint: VNHumanBodyPoseObservation.JointName,
+        geo: GeometryProxy
+    ) -> some View {
+        if let pt = bodyPoints[joint] {
+            Circle()
+                .fill(isOk ? Color.green : Color.red)
+                .frame(width: 12, height: 12)
+                .overlay(Circle().stroke(Color.white.opacity(0.6), lineWidth: 1.5))
+                .position(x: pt.x * geo.size.width, y: pt.y * geo.size.height)
         }
     }
 }
