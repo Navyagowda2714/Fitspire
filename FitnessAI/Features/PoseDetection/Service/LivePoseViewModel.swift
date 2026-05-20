@@ -4,6 +4,12 @@
 //
 //  Created by Navyashree Byregowda on 01/05/2026.
 //
+//
+//  LivePoseViewModel.swift
+//  FitnessAI
+//
+//  Created by Navyashree Byregowda on 01/05/2026.
+//
 
 
 import Foundation
@@ -30,13 +36,16 @@ final class LivePoseViewModel: NSObject, ObservableObject {
         case up, down
     }
 
-    let cameraManager = CameraManager()
+    // Initialized in override init() to satisfy @MainActor isolation requirements
+    // (Swift 6: ObservableObject.init() is implicitly @MainActor)
+    private(set) var cameraManager: CameraManager
     private let poseService     = PoseDetectionService()
     private let safetyEngine    = SafetyRuleEngine()
     private var timer: Timer?
     private var alertHistory: [FormAlert] = []
 
     override init() {
+        self.cameraManager = CameraManager()  // inside @MainActor init — no isolation warning
         super.init()
         cameraManager.delegate = self
     }

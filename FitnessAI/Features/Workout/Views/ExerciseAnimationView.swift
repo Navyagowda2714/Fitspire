@@ -5,6 +5,13 @@
 //  Created by Navyashree Byregowda on 05/05/2026.
 //
 
+//
+//  ExerciseAnimationView.swift
+//  FitnessAI
+//
+//  Created by Navyashree Byregowda on 05/05/2026.
+//
+
 import SwiftUI
 
 struct ExerciseAnimationView: View {
@@ -50,7 +57,11 @@ struct ExerciseAnimationView: View {
         case .plank:         return "Hold — breathe steady"
         case .shoulderPress: return phase < 0.5 ? "Lowering bar" : "Pressing overhead"
         case .deadlift:      return phase < 0.5 ? "Hinging down" : "Driving up"
-        case .general:       return "Stay controlled"
+        case .lunge:           return phase < 0.5 ? "Stepping back" : "Standing up"
+        case .gluteBridge:     return phase < 0.5 ? "Lowering hips" : "Drive hips up"
+        case .mountainClimber: return phase < 0.5 ? "Left knee drive" : "Right knee drive"
+        case .highKnees:       return phase < 0.5 ? "Left knee up" : "Right knee up"
+        case .general:         return "Stay controlled"
         }
     }
 
@@ -106,7 +117,11 @@ struct ExerciseAnimationView: View {
         case .plank:         drawPlank(context, cx, cy, purple, green)
         case .shoulderPress: drawPress(context, cx, cy, t, purple, green)
         case .deadlift:      drawDeadlift(context, cx, cy, t, purple, green)
-        case .general:       drawWalk(context, cx, cy, t, purple)
+        case .lunge:           drawLunge(context, cx, cy, t, purple, green)
+        case .gluteBridge:     drawGluteBridge(context, cx, cy, t, purple, green)
+        case .mountainClimber: drawMountainClimber(context, cx, cy, t, purple, green)
+        case .highKnees:       drawHighKnees(context, cx, cy, t, purple)
+        case .general:         drawWalk(context, cx, cy, t, purple)
         }
     }
 
@@ -251,4 +266,77 @@ struct ExerciseAnimationView: View {
         line(ctx, from: CGPoint(x: cx+swing*0.5, y: cy+35),
              to: CGPoint(x: cx+swing*0.3, y: cy+78), color: c)
     }
+    private func drawLunge(
+        _ ctx: GraphicsContext,
+        _ cx: Double, _ cy: Double,
+        _ t: Double,
+        _ c: Color, _ a: Color
+    ) {
+        let drop = t * 30
+        circle(ctx, center: CGPoint(x: cx, y: cy-75), radius: 9, color: c)
+        line(ctx, from: CGPoint(x: cx, y: cy-66), to: CGPoint(x: cx, y: cy-12), color: c)
+        line(ctx, from: CGPoint(x: cx, y: cy-50), to: CGPoint(x: cx-20, y: cy-25), color: a)
+        line(ctx, from: CGPoint(x: cx, y: cy-50), to: CGPoint(x: cx+20, y: cy-25), color: a)
+        // front leg
+        line(ctx, from: CGPoint(x: cx, y: cy-12), to: CGPoint(x: cx+22, y: cy+28), color: c)
+        line(ctx, from: CGPoint(x: cx+22, y: cy+28), to: CGPoint(x: cx+30, y: cy+78), color: c)
+        // back leg (drops with t)
+        line(ctx, from: CGPoint(x: cx, y: cy-12), to: CGPoint(x: cx-20, y: cy+28+drop*0.4), color: c)
+        line(ctx, from: CGPoint(x: cx-20, y: cy+28+drop*0.4), to: CGPoint(x: cx-30, y: cy+78), color: c)
+    }
+
+    private func drawGluteBridge(
+        _ ctx: GraphicsContext,
+        _ cx: Double, _ cy: Double,
+        _ t: Double,
+        _ c: Color, _ a: Color
+    ) {
+        let lift = t * 28
+        let oy: Double = 20
+        circle(ctx, center: CGPoint(x: cx-52, y: cy-10+oy), radius: 9, color: c)
+        line(ctx, from: CGPoint(x: cx-52, y: cy-1+oy), to: CGPoint(x: cx-4, y: cy-10-lift+oy), color: c)
+        line(ctx, from: CGPoint(x: cx-28, y: cy-6+oy), to: CGPoint(x: cx-32, y: cy+24+oy), color: a)
+        line(ctx, from: CGPoint(x: cx-4, y: cy-10-lift+oy), to: CGPoint(x: cx+18, y: cy+20+oy), color: c)
+        line(ctx, from: CGPoint(x: cx+18, y: cy+20+oy), to: CGPoint(x: cx+18, y: cy+55+oy), color: c)
+    }
+
+    private func drawMountainClimber(
+        _ ctx: GraphicsContext,
+        _ cx: Double, _ cy: Double,
+        _ t: Double,
+        _ c: Color, _ a: Color
+    ) {
+        let drive = t * 30
+        let oy: Double = 10
+        circle(ctx, center: CGPoint(x: cx+52, y: cy-18+oy), radius: 9, color: c)
+        line(ctx, from: CGPoint(x: cx+52, y: cy-9+oy), to: CGPoint(x: cx-52, y: cy+6+oy), color: c)
+        line(ctx, from: CGPoint(x: cx+26, y: cy+1+oy), to: CGPoint(x: cx+22, y: cy+26+oy), color: a)
+        line(ctx, from: CGPoint(x: cx-6, y: cy+4+oy), to: CGPoint(x: cx-12, y: cy+26+oy), color: a)
+        // driving knee
+        line(ctx, from: CGPoint(x: cx-52, y: cy+6+oy), to: CGPoint(x: cx-52+drive, y: cy+30-drive*0.4+oy), color: c)
+        line(ctx, from: CGPoint(x: cx-52+drive, y: cy+30-drive*0.4+oy), to: CGPoint(x: cx-52+drive+10, y: cy+60+oy), color: c)
+        // trailing leg
+        line(ctx, from: CGPoint(x: cx-52, y: cy+6+oy), to: CGPoint(x: cx-52-8, y: cy+44+oy), color: c)
+        line(ctx, from: CGPoint(x: cx-52-8, y: cy+44+oy), to: CGPoint(x: cx-52-4, y: cy+78+oy), color: c)
+    }
+
+    private func drawHighKnees(
+        _ ctx: GraphicsContext,
+        _ cx: Double, _ cy: Double,
+        _ t: Double,
+        _ c: Color
+    ) {
+        let kneeUp = t * 35
+        circle(ctx, center: CGPoint(x: cx, y: cy-75), radius: 9, color: c)
+        line(ctx, from: CGPoint(x: cx, y: cy-66), to: CGPoint(x: cx, y: cy-12), color: c)
+        line(ctx, from: CGPoint(x: cx, y: cy-50), to: CGPoint(x: cx-22, y: cy-30+kneeUp*0.3), color: c)
+        line(ctx, from: CGPoint(x: cx, y: cy-50), to: CGPoint(x: cx+22, y: cy-30-kneeUp*0.3), color: c)
+        // lifted knee
+        line(ctx, from: CGPoint(x: cx, y: cy-12), to: CGPoint(x: cx-10, y: cy+8-kneeUp*0.7), color: c)
+        line(ctx, from: CGPoint(x: cx-10, y: cy+8-kneeUp*0.7), to: CGPoint(x: cx-14, y: cy+30), color: c)
+        // standing leg
+        line(ctx, from: CGPoint(x: cx, y: cy-12), to: CGPoint(x: cx+10, y: cy+38), color: c)
+        line(ctx, from: CGPoint(x: cx+10, y: cy+38), to: CGPoint(x: cx+10, y: cy+78), color: c)
+    }
+
 }

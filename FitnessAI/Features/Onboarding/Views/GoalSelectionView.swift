@@ -6,6 +6,16 @@
 //
 
 //  GoalSelectionView.swift — FitnessAI
+//
+//  GoalSelectionView.swift
+//  FitnessAI
+//
+
+//
+//  GoalSelectionView.swift
+//  FitnessAI
+//
+
 import SwiftUI
 
 struct GoalSelectionView: View {
@@ -16,48 +26,52 @@ struct GoalSelectionView: View {
         ZStack {
             Color.appBG.ignoresSafeArea()
             VStack(alignment: .leading, spacing: 0) {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("WHAT'S YOUR GOAL")
-                        .font(.system(size: 11, weight: .bold)).kerning(1.4).foregroundStyle(Color.appLime)
-                    Text("Choose your goal")
-                        .font(.system(size: 30, weight: .heavy)).foregroundStyle(.white)
-                    Text("Your plan will be personalised around this.")
-                        .font(.system(size: 14)).foregroundStyle(Color.appT3)
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Let's build your plan!").font(.system(size: 14)).foregroundStyle(Color.appT3)
+                    // FIX: iOS 26 Text interpolation
+                    Text("What is your \(Text("fitness goal?").foregroundStyle(Color.appCyan))")
+                        .font(.system(size: 28, weight: .bold)).foregroundStyle(.white)
                 }
-                .padding(.horizontal, 24).padding(.top, 60).padding(.bottom, 24)
+                .padding(.horizontal, 28).padding(.top, 60).padding(.bottom, 28)
 
                 ScrollView {
                     VStack(spacing: 10) {
                         ForEach(FitnessGoal.allCases) { goal in
-                            GoalCard(goal: goal, isSelected: selected == goal) { selected = goal }
+                            GoalRow(goal: goal, isSelected: selected == goal) { selected = goal }
                         }
-                    }.padding(.horizontal, 24).padding(.bottom, 120)
+                    }.padding(.horizontal, 28).padding(.bottom, 130)
                 }
             }
         }
         .overlay(alignment: .bottom) {
-            VStack(spacing: 8) {
-                Button {
-                    guard let goal = selected else { return }
-                    appState.markGoalComplete(goal: goal)
-                } label: {
-                    Text("Build my plan")
-                        .font(.system(size: 16, weight: .bold))
-                        .frame(maxWidth: .infinity).frame(height: 54)
-                        .background(selected != nil ? Color.appLime : Color.appBG3)
+            Button {
+                guard let goal = selected else { return }
+                appState.markGoalComplete(goal: goal)
+            } label: {
+                HStack {
+                    Text("Build my plan").font(.system(size: 17, weight: .semibold))
                         .foregroundStyle(selected != nil ? .black : Color.appT3)
-                        .clipShape(Capsule())
+                    Spacer()
+                    Image(systemName: "arrow.right").font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(selected != nil ? .black : Color.appT3)
                 }
-                .disabled(selected == nil)
+                .padding(.horizontal, 28).frame(maxWidth: .infinity).frame(height: 58)
+                .background(selected != nil ? Color.appCyan : Color.clear)
+                .overlay(RoundedRectangle(cornerRadius: 14)
+                    .stroke(selected != nil ? Color.appCyan : Color.appHair2, lineWidth: 1.5))
+                .clipShape(RoundedRectangle(cornerRadius: 14))
+                .animation(.easeInOut(duration: 0.2), value: selected != nil)
             }
-            .padding(.horizontal, 24).padding(.bottom, 32).padding(.top, 16)
+            .disabled(selected == nil)
+            .padding(.horizontal, 28).padding(.bottom, 44).padding(.top, 16)
             .background(LinearGradient(colors: [Color.appBG.opacity(0), Color.appBG],
                                         startPoint: .top, endPoint: .bottom))
         }
     }
 }
 
-struct GoalCard: View {
+struct GoalRow: View {
     let goal: FitnessGoal
     let isSelected: Bool
     let action: () -> Void
@@ -65,22 +79,23 @@ struct GoalCard: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: 14) {
-                Circle().fill(isSelected ? Color.appLime : Color.appBG3).frame(width: 10, height: 10)
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(goal.rawValue).font(.system(size: 16, weight: .semibold)).foregroundStyle(.white)
+                    Text(goal.rawValue).font(.system(size: 15, weight: .semibold)).foregroundStyle(.white)
                     Text(goal.subtitle).font(.system(size: 12)).foregroundStyle(Color.appT3)
                 }
                 Spacer()
-                if isSelected {
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 20)).foregroundStyle(Color.appLime)
+                ZStack {
+                    Circle().stroke(isSelected ? Color.appCyan : Color.appHair2, lineWidth: 1.5)
+                        .frame(width: 22, height: 22)
+                    if isSelected { Circle().fill(Color.appCyan).frame(width: 12, height: 12) }
                 }
             }
-            .padding(16)
-            .background(isSelected ? Color.appLime.opacity(0.10) : Color.appBG2)
-            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .stroke(isSelected ? Color.appLime.opacity(0.6) : Color.appHair, lineWidth: 1))
-        }.buttonStyle(.plain)
+            .padding(16).background(isSelected ? Color.appCyan.opacity(0.08) : Color.appBG2)
+            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(isSelected ? Color.appCyan.opacity(0.5) : Color.appHair, lineWidth: 1))
+        }
+        .buttonStyle(.plain)
+        .animation(.easeInOut(duration: 0.15), value: isSelected)
     }
 }

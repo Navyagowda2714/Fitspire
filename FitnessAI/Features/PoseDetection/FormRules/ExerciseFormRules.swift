@@ -5,6 +5,13 @@
 //  Created by Navyashree Byregowda on 01/05/2026.
 //
 
+//
+//  ExerciseFormRules.swift
+//  FitnessAI
+//
+//  Created by Navyashree Byregowda on 01/05/2026.
+//
+
 import Foundation
 
 struct FormThreshold {
@@ -157,5 +164,84 @@ struct ExerciseFormRules {
             affectedJoint: "Arms"
         )
     ]
-}
 
+    // MARK: - Lunge rules
+    static let lunge: [FormThreshold] = [
+        FormThreshold(
+            name: "knee_over_toe",
+            warningValue: 0.12,
+            dangerValue: 0.20,
+            message: "Front knee too far forward",
+            correction: "Step back further so your shin stays vertical.",
+            affectedJoint: "Left Knee"
+        ),
+        FormThreshold(
+            name: "torso_lean",
+            warningValue: 0.08,
+            dangerValue: 0.14,
+            message: "Torso leaning too far forward",
+            correction: "Keep your chest up and torso upright throughout the lunge.",
+            affectedJoint: "Spine"
+        )
+    ]
+
+    // MARK: - Glute bridge rules
+    static let gluteBridge: [FormThreshold] = [
+        FormThreshold(
+            name: "hip_not_extended",
+            warningValue: 0.06,
+            dangerValue: 0.12,
+            message: "Hips not fully driven up",
+            correction: "Squeeze your glutes and drive hips until body is in a straight line.",
+            affectedJoint: "Hips"
+        ),
+        FormThreshold(
+            name: "knee_drift",
+            warningValue: 0.05,
+            dangerValue: 0.10,
+            message: "Knees drifting apart",
+            correction: "Keep your knees hip-width apart throughout the movement.",
+            affectedJoint: "Knees"
+        )
+    ]
+
+    // MARK: - Mountain climber rules
+    static let mountainClimber: [FormThreshold] = [
+        FormThreshold(
+            name: "hip_too_high",
+            warningValue: 0.06,
+            dangerValue: 0.12,
+            message: "Hips raised too high",
+            correction: "Lower your hips — keep body in a straight plank line.",
+            affectedJoint: "Hips"
+        ),
+        FormThreshold(
+            name: "hip_sag",
+            warningValue: 0.05,
+            dangerValue: 0.10,
+            message: "Hips sagging during climbers",
+            correction: "Engage your core to keep hips level.",
+            affectedJoint: "Hips"
+        )
+    ]
+
+    // MARK: - High knees rules
+    static let highKnees: [FormThreshold] = [
+        FormThreshold(
+            name: "knee_height",
+            warningValue: 0.04,
+            dangerValue: 0.08,
+            message: "Knees not reaching hip height",
+            correction: "Drive each knee up to at least hip level on every rep.",
+            affectedJoint: "Knees"
+        ),
+        FormThreshold(
+            name: "back_lean",
+            warningValue: 0.06,
+            dangerValue: 0.12,
+            message: "Leaning back too much",
+            correction: "Keep your torso upright — don't lean back as knees come up.",
+            affectedJoint: "Spine"
+        )
+    ]
+}

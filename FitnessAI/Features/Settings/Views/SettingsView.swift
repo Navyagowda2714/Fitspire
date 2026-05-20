@@ -12,6 +12,13 @@
 //  Created by Navyashree Byregowda on 06/05/2026.
 //
 
+//
+//  SettingsView.swift
+//  FitnessAI
+//
+//  Created by Navyashree Byregowda on 06/05/2026.
+//
+
 
 import SwiftUI
 import SwiftData
@@ -153,7 +160,7 @@ struct SettingsView: View {
                 Text("This permanently deletes your profile, scan history, workout plans, and meal plans. This cannot be undone.")
             }
             .alert("Export ready", isPresented: $viewModel.showExportSuccess) {
-                if let url = viewModel.exportURL {
+                if viewModel.exportURL != nil {  // url itself not used; just checking it exists
                     Button("Share") {
                         showExportSheet = true
                     }

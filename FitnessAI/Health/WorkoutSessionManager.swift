@@ -5,6 +5,13 @@
 //  Created by Navyashree Byregowda on 28/04/2026.
 //
 
+//
+//  WorkoutSessionManager.swift
+//  FitnessAI
+//
+//  Created by Navyashree Byregowda on 28/04/2026.
+//
+
 import Foundation
 import HealthKit
 import Combine
@@ -82,6 +89,10 @@ final class WorkoutSessionManager: ObservableObject {
             return .traditionalStrengthTraining
         case .plank:
             return .coreTraining
+        case .mountainClimber, .highKnees:
+            return .highIntensityIntervalTraining
+        case .lunge, .gluteBridge:
+            return .functionalStrengthTraining
         case .general:
             return .traditionalStrengthTraining
         }

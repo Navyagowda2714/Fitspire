@@ -5,6 +5,13 @@
 //  Created by Navyashree Byregowda on 07/05/2026.
 //
 
+//
+//  PersonalizedPlanEngine.swift
+//  FitnessAI
+//
+//  Created by Navyashree Byregowda on 07/05/2026.
+//
+
 
 import Foundation
 
@@ -21,7 +28,7 @@ final class PersonalizedPlanEngine {
 
         let sets  = sets(for: level, goal: goal)
         let reps  = reps(for: goal)
-        let rest  = rest(for: goal, level: level)
+        _ = rest(for: goal, level: level)  // value computed by selectExercises() internally
 
         let exercises = selectExercises(
             goal: goal,

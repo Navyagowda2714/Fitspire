@@ -5,6 +5,13 @@
 //  Created by Navyashree Byregowda on 07/05/2026.
 //
 
+//
+//  QuestionnaireModels.swift
+//  FitnessAI
+//
+//  Created by Navyashree Byregowda on 07/05/2026.
+//
+
 
 import Foundation
 
@@ -153,7 +160,7 @@ enum TrainingDays: Int, CaseIterable, Codable {
 // MARK: - Injury or Limitation
 
 struct HealthCondition: Identifiable, Codable {
-    let id = UUID()
+    var id: UUID = UUID()  // var allows Codable to decode; let with default value silently skips decode
     let name: String
     let affectsExercises: [String]
     let avoidMovements: [String]
