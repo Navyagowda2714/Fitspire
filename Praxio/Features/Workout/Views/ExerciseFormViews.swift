@@ -1688,3 +1688,504 @@ struct SimpleSkeleton: View {
         }
     }
 }
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MARK: - SQUAT — Full implementation from ContentView.swift
+// Better angle analysis, per-joint skeleton coloring, bad-rep detection.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// MARK: - Squat posture issue
+enum SquatIssue: String {
+    case correct         = "✅ Perfect Squat"
+    case kneesNotDeep    = "❌ Go Lower"
+    case backNotStraight = "❌ Keep Back Straight"
+    case hipTooHigh      = "❌ Lower Your Hips"
+    case kneesOverToes   = "❌ Knees Too Forward"
+    case detecting       = "🔍 Detecting..."
+    case notVisible      = "📷 Full Body Not Visible"
+}
+
+// MARK: - Squat phase
+enum SquatPhase { case standing, descending, bottom, ascending }
+
+// MARK: - Posture result
+struct PostureResult {
+    var issue: SquatIssue = .detecting
+    var postureScore: Int = 100
+    var kneeAngle: Double = 180
+    var hipAngle: Double = 180
+    var spineAngle: Double = 0
+    var kneeToeOffset: Double = 0
+    var trackedLeftSide: Bool = true
+    var kneeOk  = true
+    var hipOk   = true
+    var spineOk = true
+    var ankleOk = true
+    var formIsValid: Bool { kneeOk && hipOk && spineOk && ankleOk }
+}
+
+// MARK: - Squat Camera View
+struct SquatCameraView: View {
+    @StateObject private var viewModel = SquatViewModel()
+    var body: some View { squatContent }
+
+    @ViewBuilder private var squatContent: some View {
+        ZStack {
+            ExerciseSessionPreview(session: viewModel.session).ignoresSafeArea()
+            SquatSkeletonOverlay(bodyPoints: viewModel.bodyPoints, result: viewModel.postureResult)
+                .ignoresSafeArea()
+            VStack {
+                squatTopBar
+                Spacer()
+                if viewModel.showFormAlert {
+                    FormAlertBanner(message: viewModel.formAlertMessage)
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                        .animation(.spring(response: 0.4), value: viewModel.showFormAlert)
+                }
+                Spacer()
+                squatBottomPanel
+            }
+            if viewModel.showBadRepFlash {
+                Color.red.opacity(0.25).ignoresSafeArea().allowsHitTesting(false)
+                    .transition(.opacity).animation(.easeOut(duration: 0.3), value: viewModel.showBadRepFlash)
+                VStack {
+                    Spacer()
+                    Text("⚠️ Rep Not Counted\n\(viewModel.badRepReason)")
+                        .font(.title3.bold()).foregroundColor(.white)
+                        .multilineTextAlignment(.center).padding()
+                        .background(Color.red.opacity(0.85)).cornerRadius(16)
+                        .padding(.bottom, 220)
+                }
+            }
+        }
+        .onAppear { viewModel.start() }
+        .onDisappear { viewModel.stop() }
+    }
+
+    private var squatTopBar: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Squat AI").font(.title2.bold()).foregroundColor(.white)
+                Text("Real-Time Form Check").font(.caption).foregroundColor(.white.opacity(0.7))
+            }
+            Spacer()
+            Button { viewModel.switchCamera() } label: {
+                Image(systemName: "camera.rotate").font(.title2).foregroundColor(.white)
+                    .padding(12).background(Color.white.opacity(0.2)).clipShape(Circle())
+            }
+            ZStack {
+                Circle().stroke(Color.white.opacity(0.2), lineWidth: 5).frame(width: 65, height: 65)
+                Circle()
+                    .trim(from: 0, to: CGFloat(viewModel.postureResult.postureScore) / 100)
+                    .stroke(squatScoreColor, style: StrokeStyle(lineWidth: 5, lineCap: .round))
+                    .frame(width: 65, height: 65).rotationEffect(.degrees(-90))
+                Text("\(viewModel.postureResult.postureScore)").font(.headline.bold()).foregroundColor(.white)
+            }
+        }
+        .padding().background(.black.opacity(0.65)).cornerRadius(20).padding()
+    }
+
+    private var squatBottomPanel: some View {
+        VStack(spacing: 18) {
+            Text(viewModel.postureResult.issue.rawValue)
+                .font(.title2.bold()).foregroundColor(.white).multilineTextAlignment(.center)
+            HStack(spacing: 12) {
+                AngleCard(title: "Knee",  angle: viewModel.postureResult.kneeAngle,  isOk: viewModel.postureResult.kneeOk,  idealRange: "70°-92°")
+                AngleCard(title: "Hip",   angle: viewModel.postureResult.hipAngle,   isOk: viewModel.postureResult.hipOk,   idealRange: "< 110°")
+                AngleCard(title: "Back",  angle: viewModel.postureResult.spineAngle, isOk: viewModel.postureResult.spineOk, idealRange: "15°-60°")
+            }
+            HStack(spacing: 50) {
+                VStack {
+                    Text("\(viewModel.reps)").font(.system(size: 50, weight: .bold)).foregroundColor(.white)
+                    Text("REPS").foregroundColor(.white.opacity(0.7))
+                }
+                VStack {
+                    Text(viewModel.phaseText).font(.title3.bold()).foregroundColor(viewModel.phaseColor)
+                    Text("PHASE").foregroundColor(.white.opacity(0.7))
+                }
+                Button { viewModel.resetReps() } label: {
+                    VStack {
+                        Image(systemName: "arrow.counterclockwise").font(.title2).foregroundColor(.white)
+                        Text("RESET").foregroundColor(.white.opacity(0.7))
+                    }
+                }
+            }
+        }
+        .padding().background(.black.opacity(0.75)).cornerRadius(22).padding()
+    }
+
+    private var squatScoreColor: Color {
+        let s = viewModel.postureResult.postureScore
+        if s >= 80 { return .green }
+        if s >= 55 { return .yellow }
+        return .red
+    }
+}
+
+// MARK: - Form Alert Banner
+struct FormAlertBanner: View {
+    let message: String
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "exclamationmark.triangle.fill").foregroundColor(.orange)
+            Text(message).font(.subheadline.bold()).foregroundColor(.white)
+        }
+        .padding(.horizontal, 20).padding(.vertical, 10)
+        .background(Color.black.opacity(0.85)).cornerRadius(30)
+        .overlay(RoundedRectangle(cornerRadius: 30).stroke(Color.orange, lineWidth: 1.5))
+        .shadow(color: .orange.opacity(0.4), radius: 8).padding(.horizontal)
+    }
+}
+
+// MARK: - Angle Card
+struct AngleCard: View {
+    let title: String
+    let angle: Double
+    let isOk: Bool
+    let idealRange: String
+    var body: some View {
+        VStack(spacing: 5) {
+            Text(title).font(.caption).foregroundColor(.white.opacity(0.7))
+            Text("\(Int(angle))°").font(.headline.bold()).foregroundColor(isOk ? .green : .red)
+            Text(idealRange).font(.caption2).foregroundColor(.white.opacity(0.5))
+        }
+        .frame(maxWidth: .infinity).padding(.vertical, 10)
+        .background(isOk ? Color.green.opacity(0.15) : Color.red.opacity(0.15)).cornerRadius(12)
+    }
+}
+
+// MARK: - Squat Skeleton Overlay
+struct SquatSkeletonOverlay: View {
+    let bodyPoints: [VNHumanBodyPoseObservation.JointName: CGPoint]
+    let result: PostureResult
+
+    var body: some View { squatSkeletonBody }
+
+    @ViewBuilder private var squatSkeletonBody: some View {
+        GeometryReader { geo in
+            ZStack {
+                squatBones(geo: geo)
+                squatJoints(geo: geo)
+            }
+        }
+    }
+
+    private var shoulder: VNHumanBodyPoseObservation.JointName { result.trackedLeftSide ? .leftShoulder : .rightShoulder }
+    private var hip:      VNHumanBodyPoseObservation.JointName { result.trackedLeftSide ? .leftHip      : .rightHip }
+    private var knee:     VNHumanBodyPoseObservation.JointName { result.trackedLeftSide ? .leftKnee     : .rightKnee }
+    private var ankle:    VNHumanBodyPoseObservation.JointName { result.trackedLeftSide ? .leftAnkle    : .rightAnkle }
+
+    @ViewBuilder private func squatBones(geo: GeometryProxy) -> some View {
+        squatLine(j1: shoulder, j2: hip,   geo: geo, ok: result.spineOk)
+        squatLine(j1: hip,      j2: knee,  geo: geo, ok: result.hipOk)
+        squatLine(j1: knee,     j2: ankle, geo: geo, ok: result.ankleOk)
+    }
+
+    @ViewBuilder private func squatLine(
+        j1: VNHumanBodyPoseObservation.JointName,
+        j2: VNHumanBodyPoseObservation.JointName,
+        geo: GeometryProxy,
+        ok: Bool
+    ) -> some View {
+        if let p1 = bodyPoints[j1], let p2 = bodyPoints[j2] {
+            Path { path in
+                path.move(to: CGPoint(x: p1.x * geo.size.width, y: p1.y * geo.size.height))
+                path.addLine(to: CGPoint(x: p2.x * geo.size.width, y: p2.y * geo.size.height))
+            }
+            .stroke(ok ? Color.green : Color.red, style: StrokeStyle(lineWidth: 5, lineCap: .round))
+        }
+    }
+
+    @ViewBuilder private func squatJoints(geo: GeometryProxy) -> some View {
+        ForEach([shoulder, hip, knee, ankle], id: \.self) { joint in
+            squatDot(joint: joint, geo: geo)
+        }
+    }
+
+    @ViewBuilder private func squatDot(
+        joint: VNHumanBodyPoseObservation.JointName,
+        geo: GeometryProxy
+    ) -> some View {
+        if let point = bodyPoints[joint] {
+            Circle()
+                .fill(squatDotColor(for: joint))
+                .frame(width: 14, height: 14)
+                .overlay(Circle().stroke(Color.white.opacity(0.5), lineWidth: 1.5))
+                .position(x: point.x * geo.size.width, y: point.y * geo.size.height)
+        }
+    }
+
+    private func squatDotColor(for joint: VNHumanBodyPoseObservation.JointName) -> Color {
+        switch joint {
+        case .leftShoulder, .rightShoulder: return result.spineOk ? .green : .red
+        case .leftHip,      .rightHip:      return result.hipOk   ? .green : .red
+        case .leftKnee,     .rightKnee:     return result.kneeOk  ? .green : .red
+        case .leftAnkle,    .rightAnkle:    return result.ankleOk ? .green : .red
+        default:                            return .white
+        }
+    }
+}
+
+// MARK: - Squat View Model
+final class SquatViewModel: NSObject, ObservableObject, AVCaptureVideoDataOutputSampleBufferDelegate {
+
+    let session = AVCaptureSession()
+    @Published var bodyPoints: [VNHumanBodyPoseObservation.JointName: CGPoint] = [:]
+    @Published var postureResult = PostureResult()
+    @Published var reps = 0
+    @Published var currentPhase: SquatPhase = .standing
+    @Published var phaseText = "Standing"
+    @Published var phaseColor: Color = .white
+    @Published var cameraPosition: AVCaptureDevice.Position = .back
+    @Published var showFormAlert = false
+    @Published var formAlertMessage = ""
+    @Published var showBadRepFlash = false
+    @Published var badRepReason = ""
+
+    private var frameBuffer: [PostureResult] = []
+    private var lastKneeAngle: Double = 180
+    private var bottomReached = false
+    private var squatStarted = false
+    private var validBottomFrames = 0
+    private var validStandingFrames = 0
+    private var stableIssueFrames = 0
+    private var lastIssue: SquatIssue = .detecting
+    private var alertTimer: Timer?
+    private var spineErrorFrames = 0
+    private var ankleErrorFrames = 0
+    private var hipErrorFrames   = 0
+    private var hadSpineError = false
+    private var hadHipError   = false
+    private var hadAnkleError = false
+    private var hadKneeError  = false
+
+    func start() {
+        AVCaptureDevice.requestAccess(for: .video) { granted in
+            guard granted else { return }
+            DispatchQueue.global(qos: .userInitiated).async { self.setupCamera() }
+        }
+    }
+    func stop() { session.stopRunning() }
+
+    func resetReps() {
+        DispatchQueue.main.async {
+            self.reps = 0; self.bottomReached = false; self.squatStarted = false
+            self.currentPhase = .standing; self.phaseText = "Standing"; self.phaseColor = .white
+            self.validBottomFrames = 0; self.validStandingFrames = 0
+            self.spineErrorFrames = 0; self.ankleErrorFrames = 0; self.hipErrorFrames = 0
+            self.hadSpineError = false; self.hadHipError = false
+            self.hadAnkleError = false; self.hadKneeError = false
+        }
+    }
+
+    private func setupCamera() {
+        guard !session.isRunning else { return }
+        session.beginConfiguration(); session.sessionPreset = .high
+        guard let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: cameraPosition),
+              let input  = try? AVCaptureDeviceInput(device: device),
+              session.canAddInput(input) else { return }
+        session.addInput(input)
+        let output = AVCaptureVideoDataOutput()
+        output.setSampleBufferDelegate(self, queue: DispatchQueue(label: "squatVideoQueue"))
+        output.alwaysDiscardsLateVideoFrames = true
+        if session.canAddOutput(output) { session.addOutput(output) }
+        session.commitConfiguration(); session.startRunning()
+    }
+
+    func switchCamera() {
+        DispatchQueue.global(qos: .userInitiated).async {
+            let newPos: AVCaptureDevice.Position = self.cameraPosition == .front ? .back : .front
+            self.session.beginConfiguration()
+            if let old = self.session.inputs.first { self.session.removeInput(old) }
+            guard let dev = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: newPos),
+                  let inp = try? AVCaptureDeviceInput(device: dev),
+                  self.session.canAddInput(inp) else { self.session.commitConfiguration(); return }
+            self.session.addInput(inp); self.session.commitConfiguration()
+            DispatchQueue.main.async { self.cameraPosition = newPos }
+        }
+    }
+
+    func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
+        guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
+        let orientation: CGImagePropertyOrientation = cameraPosition == .front ? .leftMirrored : .right
+        analyzeFrame(pixelBuffer: pixelBuffer, orientation: orientation)
+    }
+
+    private func analyzeFrame(pixelBuffer: CVPixelBuffer, orientation: CGImagePropertyOrientation) {
+        let request = VNDetectHumanBodyPoseRequest()
+        let handler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer, orientation: orientation)
+        do {
+            try handler.perform([request])
+            guard let observation = request.results?.first else { return }
+            let points = try observation.recognizedPoints(.all)
+            updateBodyPoints(points)
+            let rawResult = analyzeSquatPosture(points)
+            if rawResult.issue == .notVisible { DispatchQueue.main.async { self.postureResult = rawResult }; return }
+            var smoothed = smoothResult(rawResult)
+            updatePhaseAndReps(smoothedResult: smoothed)
+            if smoothed.issue == lastIssue { stableIssueFrames += 1 } else { stableIssueFrames = 0; lastIssue = smoothed.issue }
+            if stableIssueFrames < 3 { smoothed.issue = postureResult.issue }
+            updateFormAlert(result: smoothed)
+            DispatchQueue.main.async { self.postureResult = smoothed }
+        } catch {}
+    }
+
+    private func updateFormAlert(result: PostureResult) {
+        guard currentPhase == .descending || currentPhase == .bottom else {
+            DispatchQueue.main.async { self.showFormAlert = false }; return
+        }
+        var message: String? = nil
+        if !result.spineOk      { message = "Keep Your Back Straight!" }
+        else if !result.ankleOk { message = "Knees Too Far Forward!" }
+        else if !result.hipOk   { message = "Lower Your Hips More!" }
+        DispatchQueue.main.async {
+            if let msg = message {
+                self.formAlertMessage = msg; self.showFormAlert = true
+                self.alertTimer?.invalidate()
+                self.alertTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: false) { _ in
+                    DispatchQueue.main.async { self.showFormAlert = false }
+                }
+            } else { self.showFormAlert = false }
+        }
+    }
+
+    private func updatePhaseAndReps(smoothedResult: PostureResult) {
+        let kneeAngle = smoothedResult.kneeAngle
+        let prev = lastKneeAngle
+        var nextPhase = currentPhase
+        var addRep = false
+
+        if currentPhase == .descending || currentPhase == .bottom {
+            if !smoothedResult.spineOk { spineErrorFrames += 1 } else { spineErrorFrames = 0 }
+            if !smoothedResult.ankleOk { ankleErrorFrames += 1 } else { ankleErrorFrames = 0 }
+            if !smoothedResult.hipOk   { hipErrorFrames += 1 }   else { hipErrorFrames = 0 }
+            if spineErrorFrames >= 3 { hadSpineError = true }
+            if ankleErrorFrames >= 3 { hadAnkleError = true }
+            if hipErrorFrames   >= 3 { hadHipError   = true }
+            if !smoothedResult.kneeOk { hadKneeError = true }
+        }
+        if kneeAngle < 145 && prev > kneeAngle && !bottomReached { nextPhase = .descending; squatStarted = true }
+        validBottomFrames = kneeAngle <= 95 ? validBottomFrames + 1 : 0
+        if validBottomFrames >= 3 { nextPhase = .bottom; bottomReached = true }
+        if bottomReached && kneeAngle > prev && kneeAngle < 152 { nextPhase = .ascending }
+        if squatStarted && kneeAngle >= 152 {
+            validStandingFrames += 1
+            if validStandingFrames >= 2 {
+                if bottomReached {
+                    if !hadAnkleError { addRep = true } else { triggerBadRepFeedback() }
+                }
+                nextPhase = .standing; bottomReached = false; squatStarted = false
+                validStandingFrames = 0; validBottomFrames = 0
+                spineErrorFrames = 0; ankleErrorFrames = 0; hipErrorFrames = 0
+                hadSpineError = false; hadHipError = false; hadAnkleError = false; hadKneeError = false
+            }
+        } else { validStandingFrames = 0 }
+        lastKneeAngle = kneeAngle
+        DispatchQueue.main.async {
+            if addRep { self.reps += 1 }
+            self.currentPhase = nextPhase
+            switch nextPhase {
+            case .standing:   self.phaseText = "Standing";        self.phaseColor = .white
+            case .descending: self.phaseText = "Going Down";      self.phaseColor = .yellow
+            case .bottom:     self.phaseText = "Perfect Depth ✅"; self.phaseColor = .green
+            case .ascending:  self.phaseText = "Coming Up";       self.phaseColor = .blue
+            }
+        }
+    }
+
+    private func triggerBadRepFeedback() {
+        var reasons: [String] = []
+        if hadAnkleError { reasons.append("Knees too forward") }
+        if hadHipError   { reasons.append("Hips too high") }
+        guard !reasons.isEmpty else { DispatchQueue.main.async { self.reps += 1 }; return }
+        let reason = reasons.joined(separator: " • ")
+        DispatchQueue.main.async {
+            self.badRepReason = reason; self.showBadRepFlash = true
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) { self.showBadRepFlash = false }
+        }
+    }
+
+    private func analyzeSquatPosture(_ points: [VNHumanBodyPoseObservation.JointName: VNRecognizedPoint]) -> PostureResult {
+        var result = PostureResult()
+        let useLeft = betterSide(points)
+        result.trackedLeftSide = useLeft
+        let shoulderKey: VNHumanBodyPoseObservation.JointName = useLeft ? .leftShoulder : .rightShoulder
+        let hipKey:      VNHumanBodyPoseObservation.JointName = useLeft ? .leftHip      : .rightHip
+        let kneeKey:     VNHumanBodyPoseObservation.JointName = useLeft ? .leftKnee     : .rightKnee
+        let ankleKey:    VNHumanBodyPoseObservation.JointName = useLeft ? .leftAnkle    : .rightAnkle
+        for joint in [shoulderKey, hipKey, kneeKey, ankleKey] {
+            guard let p = points[joint], p.confidence > 0.4 else { result.issue = .notVisible; return result }
+        }
+        let shoulder = points[shoulderKey]!.location
+        let hip      = points[hipKey]!.location
+        let knee     = points[kneeKey]!.location
+        let ankle    = points[ankleKey]!.location
+        result.kneeAngle  = squatAngle(first: hip, middle: knee, last: ankle)
+        result.hipAngle   = squatAngle(first: shoulder, middle: hip, last: knee)
+        let torsoAngle    = abs(atan2(shoulder.y - hip.y, shoulder.x - hip.x) * 180 / .pi)
+        result.spineAngle = torsoAngle
+        result.kneeToeOffset = knee.x - ankle.x
+        let isSquatting = result.kneeAngle < 160
+        guard isSquatting else {
+            result.kneeOk = true; result.hipOk = true; result.spineOk = true; result.ankleOk = true
+            result.issue = .correct; result.postureScore = 100; return result
+        }
+        result.ankleOk = abs(result.kneeToeOffset) <= 0.18
+        result.spineOk = torsoAngle >= 15 && torsoAngle <= 65
+        switch currentPhase {
+        case .standing, .descending: result.kneeOk = true; result.hipOk = true
+        case .bottom:     result.kneeOk = result.kneeAngle <= 92; result.hipOk = result.hipAngle <= 110
+        case .ascending:  result.kneeOk = true; result.hipOk = result.hipAngle <= (result.kneeAngle + 35)
+        }
+        var score = 100
+        if !result.kneeOk  { score -= 30 }
+        if !result.hipOk   { score -= 20 }
+        if !result.spineOk && currentPhase != .ascending { score -= 30 }
+        if !result.ankleOk { score -= 20 }
+        result.postureScore = max(score, 0)
+        if !result.spineOk && currentPhase != .ascending { result.issue = .backNotStraight }
+        else if !result.ankleOk { result.issue = .kneesOverToes }
+        else if !result.hipOk   { result.issue = .hipTooHigh }
+        else if !result.kneeOk  { result.issue = .kneesNotDeep }
+        else                    { result.issue = .correct }
+        return result
+    }
+
+    private func betterSide(_ points: [VNHumanBodyPoseObservation.JointName: VNRecognizedPoint]) -> Bool {
+        let lTotal: Float = (points[.leftShoulder]?.confidence  ?? 0) + (points[.leftHip]?.confidence  ?? 0)
+                          + (points[.leftKnee]?.confidence      ?? 0) + (points[.leftAnkle]?.confidence ?? 0)
+        let rTotal: Float = (points[.rightShoulder]?.confidence ?? 0) + (points[.rightHip]?.confidence ?? 0)
+                          + (points[.rightKnee]?.confidence     ?? 0) + (points[.rightAnkle]?.confidence ?? 0)
+        return lTotal >= rTotal
+    }
+
+    private func updateBodyPoints(_ points: [VNHumanBodyPoseObservation.JointName: VNRecognizedPoint]) {
+        var mapped: [VNHumanBodyPoseObservation.JointName: CGPoint] = [:]
+        for (joint, point) in points where point.confidence > 0.3 {
+            mapped[joint] = CGPoint(x: point.location.x, y: 1 - point.location.y)
+        }
+        DispatchQueue.main.async { self.bodyPoints = mapped }
+    }
+
+    private func squatAngle(first: CGPoint, middle: CGPoint, last: CGPoint) -> Double {
+        let a = atan2(first.y - middle.y, first.x - middle.x)
+        let b = atan2(last.y  - middle.y, last.x  - middle.x)
+        var angle = abs((a - b) * 180 / .pi)
+        if angle > 180 { angle = 360 - angle }
+        return angle
+    }
+
+    private func smoothResult(_ result: PostureResult) -> PostureResult {
+        frameBuffer.append(result)
+        if frameBuffer.count > 8 { frameBuffer.removeFirst() }
+        let n = Double(frameBuffer.count)
+        var smoothed = result
+        smoothed.kneeAngle    = frameBuffer.map(\.kneeAngle).reduce(0,+)   / n
+        smoothed.hipAngle     = frameBuffer.map(\.hipAngle).reduce(0,+)    / n
+        smoothed.spineAngle   = frameBuffer.map(\.spineAngle).reduce(0,+)  / n
+        smoothed.postureScore = Int(Double(frameBuffer.map(\.postureScore).reduce(0,+)) / n)
+        smoothed.trackedLeftSide = result.trackedLeftSide
+        return smoothed
+    }
+}

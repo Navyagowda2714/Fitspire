@@ -35,11 +35,6 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		5D5094322FA151540027A8C7 /* FitnessAIWatch  */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = "FitnessAIWatch ";
-			sourceTree = "<group>";
-		};
 		5D5094592FA153F40027A8C7 /* Praxio */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
@@ -65,7 +60,6 @@
 			isa = PBXGroup;
 			children = (
 				5D5094592FA153F40027A8C7 /* Praxio */,
-				5D5094322FA151540027A8C7 /* FitnessAIWatch  */,
 				5DEA7CD32FA7B50E00B20CCE /* Praxio.app */,
 			);
 			sourceTree = "<group>";
