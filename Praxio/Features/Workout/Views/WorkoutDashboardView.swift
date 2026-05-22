@@ -2,11 +2,6 @@
 //  WorkoutDashboardView.swift
 //  FitnessAI
 //
-//  Created by Navyashree Byregowda on 28/04/2026.
-//
-//  WorkoutDashboardView.swift
-//  FitnessAI
-//
 //  FIXED:
 //  1. Shows only home/bodyweight exercises — no gym-only exercises (deadlift, shoulder press)
 //  2. Every exercise tap goes through HomeExerciseDemoView FIRST (not directly to camera)
@@ -20,10 +15,12 @@ struct WorkoutDashboardView: View {
 
     // Using item-based fullScreenCover to avoid the race condition where
     // isPresented fires before the exercise is set → blank black screen.
-    @State private var demoExercise:   HomeExercise? = nil   // drives demo sheet
-    @State private var cameraExercise: ExerciseType? = nil   // drives camera sheet
-    @State private var timerExercise:  HomeExercise? = nil   // drives timer sheet
+    @State private var demoExercise:    HomeExercise? = nil   // drives demo sheet
+    @State private var cameraExercise:  ExerciseType? = nil   // drives camera sheet
+    @State private var timerExercise:   HomeExercise? = nil   // drives timer sheet
     @State private var selectedCategory: HomeExercise.Category? = nil  // category filter
+    // Stores the HomeExercise for the camera session — persists after demoExercise = nil
+    @State private var cameraHomeExercise: HomeExercise? = nil
 
     private var exercises: [HomeExercise] {
         guard let cat = selectedCategory else {
@@ -160,7 +157,8 @@ struct WorkoutDashboardView: View {
                     exercise: ex,
                     onStartCamera: ex.poseType != nil ? {
                         let poseType = ex.poseType!
-                        demoExercise = nil          // dismiss demo
+                        cameraHomeExercise = ex     // ← save BEFORE clearing demoExercise
+                        demoExercise = nil           // dismiss demo
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
                             cameraExercise = poseType   // then open camera
                         }
@@ -175,14 +173,18 @@ struct WorkoutDashboardView: View {
                 )
             }
 
-            // ── Camera live workout: routes to per-exercise Vision form check ──
+            // ── Camera live workout: always uses ExerciseLiveView ─────────────
+            // cameraHomeExercise is saved BEFORE demoExercise is cleared,
+            // so it is always non-nil when this cover opens.
             .fullScreenCover(item: $cameraExercise) { poseType in
-                // ExerciseLiveView finds the matching HomeExercise and shows the
-                // correct Vision-based form checker (plank hold, pushup reps, etc.)
-                if let homeEx = demoExercise ?? HomeExerciseLibrary.bodyweight.first(where: { $0.poseType == poseType }) {
+                if let homeEx = cameraHomeExercise {
                     ExerciseLiveView(exercise: homeEx)
                 } else {
-                    LiveWorkoutView(exercise: poseType)
+                    // Fallback: look up by poseType
+                    ExerciseLiveView(
+                        exercise: HomeExerciseLibrary.bodyweight.first(where: { $0.poseType == poseType })
+                            ?? HomeExerciseLibrary.bodyweight[0]
+                    )
                 }
             }
 
