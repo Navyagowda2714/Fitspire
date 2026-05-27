@@ -54,6 +54,7 @@ final class PushUpViewModel2: NSObject, ObservableObject, AVCaptureVideoDataOutp
     @Published var showBadRep = false; @Published var badRepReason = ""
     @Published var cameraPosition: AVCaptureDevice.Position = .back
 
+    private var isConfiguring = false
     private var frameBuffer: [PushUpPostureResult] = []
     private var lastElbow: Double = 180
     private var bottomReached = false; private var repStarted = false
@@ -69,12 +70,14 @@ final class PushUpViewModel2: NSObject, ObservableObject, AVCaptureVideoDataOutp
     func switchCamera() {
         DispatchQueue.global(qos: .userInitiated).async {
             let pos: AVCaptureDevice.Position = self.cameraPosition == .front ? .back : .front
+            self.isConfiguring = true
             self.session.beginConfiguration()
             if let old = self.session.inputs.first { self.session.removeInput(old) }
             guard let dev = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: pos),
                   let inp = try? AVCaptureDeviceInput(device: dev), self.session.canAddInput(inp)
-            else { self.session.commitConfiguration(); return }
+            else { self.session.commitConfiguration(); self.isConfiguring = false; return }
             self.session.addInput(inp); self.session.commitConfiguration()
+            self.isConfiguring = false
             DispatchQueue.main.async { self.cameraPosition = pos }
         }
     }
@@ -328,6 +331,7 @@ final class LungeViewModel2: NSObject, ObservableObject, AVCaptureVideoDataOutpu
     @Published var showBadRep = false; @Published var badRepReason = ""
     @Published var cameraPosition: AVCaptureDevice.Position = .back
 
+    private var isConfiguring = false
     private var frameBuffer: [LungePostureResult] = []
     private var lastKnee: Double = 180
     private var bottomReached = false; private var repStarted = false
@@ -337,18 +341,32 @@ final class LungeViewModel2: NSObject, ObservableObject, AVCaptureVideoDataOutpu
     private var alertTimer: Timer?
 
     func start() { AVCaptureDevice.requestAccess(for: .video) { g in guard g else { return }; DispatchQueue.global(qos: .userInitiated).async { self.setup() } } }
-    func stop() { session.stopRunning() }
+    func stop() {
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self = self else { return }
+            guard !self.isConfiguring else {
+                // Session is mid-configuration — wait briefly then stop
+                DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: .now() + 0.3) {
+                    self.session.stopRunning()
+                }
+                return
+            }
+            self.session.stopRunning()
+        }
+    }
     func resetReps() { DispatchQueue.main.async { self.reps = 0; self.bottomReached = false; self.repStarted = false; self.validBottomFrames = 0; self.validStandFrames = 0; self.hadKneeError = false; self.kneeErrorFrames = 0 } }
 
     func switchCamera() {
         DispatchQueue.global(qos: .userInitiated).async {
             let pos: AVCaptureDevice.Position = self.cameraPosition == .front ? .back : .front
+            self.isConfiguring = true
             self.session.beginConfiguration()
             if let old = self.session.inputs.first { self.session.removeInput(old) }
             guard let dev = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: pos),
                   let inp = try? AVCaptureDeviceInput(device: dev), self.session.canAddInput(inp)
-            else { self.session.commitConfiguration(); return }
+            else { self.session.commitConfiguration(); self.isConfiguring = false; return }
             self.session.addInput(inp); self.session.commitConfiguration()
+            self.isConfiguring = false
             DispatchQueue.main.async { self.cameraPosition = pos }
         }
     }
@@ -584,6 +602,7 @@ final class GBViewModel: NSObject, ObservableObject, AVCaptureVideoDataOutputSam
     @Published var showAlert = false; @Published var alertMessage = ""
     @Published var cameraPosition: AVCaptureDevice.Position = .back
 
+    private var isConfiguring = false
     private var frameBuffer: [GBPostureResult] = []
     private var lastHip: Double = 180
     private var topReached = false; private var repStarted = false
@@ -591,18 +610,32 @@ final class GBViewModel: NSObject, ObservableObject, AVCaptureVideoDataOutputSam
     private var alertTimer: Timer?
 
     func start() { AVCaptureDevice.requestAccess(for: .video) { g in guard g else { return }; DispatchQueue.global(qos: .userInitiated).async { self.setup() } } }
-    func stop() { session.stopRunning() }
+    func stop() {
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self = self else { return }
+            guard !self.isConfiguring else {
+                // Session is mid-configuration — wait briefly then stop
+                DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: .now() + 0.3) {
+                    self.session.stopRunning()
+                }
+                return
+            }
+            self.session.stopRunning()
+        }
+    }
     func resetReps() { DispatchQueue.main.async { self.reps = 0; self.topReached = false; self.repStarted = false; self.validTopFrames = 0; self.validDownFrames = 0 } }
 
     func switchCamera() {
         DispatchQueue.global(qos: .userInitiated).async {
             let pos: AVCaptureDevice.Position = self.cameraPosition == .front ? .back : .front
+            self.isConfiguring = true
             self.session.beginConfiguration()
             if let old = self.session.inputs.first { self.session.removeInput(old) }
             guard let dev = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: pos),
                   let inp = try? AVCaptureDeviceInput(device: dev), self.session.canAddInput(inp)
-            else { self.session.commitConfiguration(); return }
+            else { self.session.commitConfiguration(); self.isConfiguring = false; return }
             self.session.addInput(inp); self.session.commitConfiguration()
+            self.isConfiguring = false
             DispatchQueue.main.async { self.cameraPosition = pos }
         }
     }
@@ -818,6 +851,7 @@ final class PlankViewModel2: NSObject, ObservableObject, AVCaptureVideoDataOutpu
     @Published var showAlert = false; @Published var alertMessage = ""
     @Published var cameraPosition: AVCaptureDevice.Position = .back
 
+    private var isConfiguring = false
     private var frameBuffer: [PlankPostureResult] = []
     private var holdTimer: Timer?
     private var alertTimer: Timer?
@@ -829,12 +863,14 @@ final class PlankViewModel2: NSObject, ObservableObject, AVCaptureVideoDataOutpu
     func switchCamera() {
         DispatchQueue.global(qos: .userInitiated).async {
             let pos: AVCaptureDevice.Position = self.cameraPosition == .front ? .back : .front
+            self.isConfiguring = true
             self.session.beginConfiguration()
             if let old = self.session.inputs.first { self.session.removeInput(old) }
             guard let dev = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: pos),
                   let inp = try? AVCaptureDeviceInput(device: dev), self.session.canAddInput(inp)
-            else { self.session.commitConfiguration(); return }
+            else { self.session.commitConfiguration(); self.isConfiguring = false; return }
             self.session.addInput(inp); self.session.commitConfiguration()
+            self.isConfiguring = false
             DispatchQueue.main.async { self.cameraPosition = pos }
         }
     }
@@ -1051,24 +1087,39 @@ final class HKViewModel: NSObject, ObservableObject, AVCaptureVideoDataOutputSam
     @Published var showAlert = false; @Published var alertMessage = ""
     @Published var cameraPosition: AVCaptureDevice.Position = .back
 
+    private var isConfiguring = false
     private var frameBuffer: [HKPostureResult] = []
     private var lastKneeHeight: Double = 0
     private var kneeLiftCount = 0
     private var alertTimer: Timer?
 
     func start() { AVCaptureDevice.requestAccess(for: .video) { g in guard g else { return }; DispatchQueue.global(qos: .userInitiated).async { self.setup() } } }
-    func stop() { session.stopRunning() }
+    func stop() {
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self = self else { return }
+            guard !self.isConfiguring else {
+                // Session is mid-configuration — wait briefly then stop
+                DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: .now() + 0.3) {
+                    self.session.stopRunning()
+                }
+                return
+            }
+            self.session.stopRunning()
+        }
+    }
     func resetReps() { DispatchQueue.main.async { self.reps = 0; self.kneeLiftCount = 0 } }
 
     func switchCamera() {
         DispatchQueue.global(qos: .userInitiated).async {
             let pos: AVCaptureDevice.Position = self.cameraPosition == .front ? .back : .front
+            self.isConfiguring = true
             self.session.beginConfiguration()
             if let old = self.session.inputs.first { self.session.removeInput(old) }
             guard let dev = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: pos),
                   let inp = try? AVCaptureDeviceInput(device: dev), self.session.canAddInput(inp)
-            else { self.session.commitConfiguration(); return }
+            else { self.session.commitConfiguration(); self.isConfiguring = false; return }
             self.session.addInput(inp); self.session.commitConfiguration()
+            self.isConfiguring = false
             DispatchQueue.main.async { self.cameraPosition = pos }
         }
     }

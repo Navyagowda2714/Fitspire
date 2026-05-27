@@ -9,7 +9,6 @@ struct WorkoutDashboardView: View {
     // isPresented fires before the exercise is set → blank black screen.
     @State private var demoExercise:    HomeExercise? = nil   // drives demo sheet
     @State private var cameraExercise:  ExerciseType? = nil   // drives camera sheet
-    @State private var timerExercise:   HomeExercise? = nil   // drives timer sheet
     @State private var selectedCategory: HomeExercise.Category? = nil  // category filter
     // Stores the HomeExercise for the camera session — persists after demoExercise = nil
     @State private var cameraHomeExercise: HomeExercise? = nil
@@ -149,6 +148,7 @@ struct WorkoutDashboardView: View {
             .fullScreenCover(item: $demoExercise) { ex in
                 HomeExerciseDemoView(
                     exercise: ex,
+<<<<<<< HEAD
                     onStartCamera: ex.poseType != nil ? {
                         cameraHomeExercise = ex     // save before clearing
                         demoExercise = nil           // dismiss demo
@@ -161,6 +161,15 @@ struct WorkoutDashboardView: View {
                         demoExercise = nil          // dismiss demo
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
                             timerExercise = e       // then open timer
+=======
+                    onStartCamera: {
+                        guard ex.poseType != nil else { return }
+                        let poseType = ex.poseType!
+                        cameraHomeExercise = ex
+                        demoExercise = nil
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                            cameraExercise = poseType
+>>>>>>> develop
                         }
                     }
                 )
@@ -190,10 +199,6 @@ struct WorkoutDashboardView: View {
                 }
             }
 
-            // ── Guided timer ─────────────────────────────────────────────────
-            .fullScreenCover(item: $timerExercise) { ex in
-                GuidedTimerView(exercise: ex)
-            }
         }
     }
 
