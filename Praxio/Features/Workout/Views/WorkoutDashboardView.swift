@@ -17,7 +17,6 @@ struct WorkoutDashboardView: View {
     // isPresented fires before the exercise is set → blank black screen.
     @State private var demoExercise:    HomeExercise? = nil   // drives demo sheet
     @State private var cameraExercise:  ExerciseType? = nil   // drives camera sheet
-    @State private var timerExercise:   HomeExercise? = nil   // drives timer sheet
     @State private var selectedCategory: HomeExercise.Category? = nil  // category filter
     // Stores the HomeExercise for the camera session — persists after demoExercise = nil
     @State private var cameraHomeExercise: HomeExercise? = nil
@@ -155,19 +154,13 @@ struct WorkoutDashboardView: View {
             .fullScreenCover(item: $demoExercise) { ex in
                 HomeExerciseDemoView(
                     exercise: ex,
-                    onStartCamera: ex.poseType != nil ? {
+                    onStartCamera: {
+                        guard ex.poseType != nil else { return }
                         let poseType = ex.poseType!
-                        cameraHomeExercise = ex     // ← save BEFORE clearing demoExercise
-                        demoExercise = nil           // dismiss demo
+                        cameraHomeExercise = ex
+                        demoExercise = nil
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
-                            cameraExercise = poseType   // then open camera
-                        }
-                    } : nil,
-                    onStartTimer: {
-                        let e = ex
-                        demoExercise = nil          // dismiss demo
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
-                            timerExercise = e       // then open timer
+                            cameraExercise = poseType
                         }
                     }
                 )
@@ -188,10 +181,6 @@ struct WorkoutDashboardView: View {
                 }
             }
 
-            // ── Guided timer ─────────────────────────────────────────────────
-            .fullScreenCover(item: $timerExercise) { ex in
-                GuidedTimerView(exercise: ex)
-            }
         }
     }
 
