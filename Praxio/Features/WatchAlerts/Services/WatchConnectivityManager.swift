@@ -98,3 +98,40 @@ extension WatchConnectivityManager: WCSessionDelegate {
         }
     }
 }
+struct WatchRepUpdate: Codable {
+    var repCount: Int
+    var formScore: Int
+    var feedback: String
+}
+
+// Add to WatchConnectivityManager
+func sendRepUpdate(_ update: WatchRepUpdate) {
+    guard WCSession.default.activationState == .activated,
+          WCSession.default.isReachable else { return }
+    let data = (try? JSONEncoder().encode(update)) ?? Data()
+    WCSession.default.sendMessage(["repUpdate": data], replyHandler: nil)
+}
+
+func sendPostureAlert(_ message: String) {
+    guard WCSession.default.activationState == .activated else { return }
+    WCSession.default.sendMessage(["postureAlert": message], replyHandler: nil)
+}
+
+// In session(_:didReceiveMessage:) on Watch side — add:
+if let msg = message["postureAlert"] as? String {
+    DispatchQueue.main.async {
+        WKInterfaceDevice.current().play(.failure)  // haptic
+        NotificationCenter.default.post(name: .postureAlert, object: msg)
+    }
+}
+if let data = message["repUpdate"] as? Data,
+   let update = try? JSONDecoder().decode(WatchRepUpdate.self, from: data) {
+    DispatchQueue.main.async {
+        NotificationCenter.default.post(name: .repUpdate, object: update)
+        WKInterfaceDevice.current().play(.click)  // haptic on rep
+    }
+}
+
+// Add to Notification.Name
+static let postureAlert = Notification.Name("postureAlert")
+static let repUpdate = Notification.Name("repUpdate")
