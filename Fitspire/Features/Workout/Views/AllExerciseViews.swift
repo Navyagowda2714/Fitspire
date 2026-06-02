@@ -92,7 +92,8 @@ final class PushUpViewModel2: NSObject, ObservableObject, AVCaptureVideoDataOutp
         out.setSampleBufferDelegate(self, queue: DispatchQueue(label: "puQueue"))
         out.alwaysDiscardsLateVideoFrames = true
         if session.canAddOutput(out) { session.addOutput(out) }
-        session.commitConfiguration(); session.startRunning()
+        session.commitConfiguration()
+        DispatchQueue.global(qos: .userInitiated).async { self.session.startRunning() }
     }
 
     func captureOutput(_ output: AVCaptureOutput, didOutput sb: CMSampleBuffer, from conn: AVCaptureConnection) {
@@ -381,7 +382,8 @@ final class LungeViewModel2: NSObject, ObservableObject, AVCaptureVideoDataOutpu
         out.setSampleBufferDelegate(self, queue: DispatchQueue(label: "lungeQueue2"))
         out.alwaysDiscardsLateVideoFrames = true
         if session.canAddOutput(out) { session.addOutput(out) }
-        session.commitConfiguration(); session.startRunning()
+        session.commitConfiguration()
+        DispatchQueue.global(qos: .userInitiated).async { self.session.startRunning() }
     }
 
     func captureOutput(_ output: AVCaptureOutput, didOutput sb: CMSampleBuffer, from conn: AVCaptureConnection) {
@@ -650,7 +652,8 @@ final class GBViewModel: NSObject, ObservableObject, AVCaptureVideoDataOutputSam
         out.setSampleBufferDelegate(self, queue: DispatchQueue(label: "gbQueue"))
         out.alwaysDiscardsLateVideoFrames = true
         if session.canAddOutput(out) { session.addOutput(out) }
-        session.commitConfiguration(); session.startRunning()
+        session.commitConfiguration()
+        DispatchQueue.global(qos: .userInitiated).async { self.session.startRunning() }
     }
 
     func captureOutput(_ output: AVCaptureOutput, didOutput sb: CMSampleBuffer, from conn: AVCaptureConnection) {
@@ -885,7 +888,8 @@ final class PlankViewModel2: NSObject, ObservableObject, AVCaptureVideoDataOutpu
         out.setSampleBufferDelegate(self, queue: DispatchQueue(label: "plankQueue2"))
         out.alwaysDiscardsLateVideoFrames = true
         if session.canAddOutput(out) { session.addOutput(out) }
-        session.commitConfiguration(); session.startRunning()
+        session.commitConfiguration()
+        DispatchQueue.global(qos: .userInitiated).async { self.session.startRunning() }
     }
 
     func captureOutput(_ output: AVCaptureOutput, didOutput sb: CMSampleBuffer, from conn: AVCaptureConnection) {
@@ -1134,7 +1138,8 @@ final class HKViewModel: NSObject, ObservableObject, AVCaptureVideoDataOutputSam
         out.setSampleBufferDelegate(self, queue: DispatchQueue(label: "hkQueue2"))
         out.alwaysDiscardsLateVideoFrames = true
         if session.canAddOutput(out) { session.addOutput(out) }
-        session.commitConfiguration(); session.startRunning()
+        session.commitConfiguration()
+        DispatchQueue.global(qos: .userInitiated).async { self.session.startRunning() }
     }
 
     func captureOutput(_ output: AVCaptureOutput, didOutput sb: CMSampleBuffer, from conn: AVCaptureConnection) {
