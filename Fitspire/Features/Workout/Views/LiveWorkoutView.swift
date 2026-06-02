@@ -67,7 +67,7 @@ struct LiveWorkoutView: View {
                         statBox(label: "FORM", value: "\(vm.formScore)%",
                                 color: vm.formScore >= 80 ? Color(hex: "#00E5FF") : .orange)
                         Divider().frame(height: 40).background(Color.white.opacity(0.2))
-                        statBox(label: "TARGET", value: "\(exercise.reps)")
+                        statBox(label: "TARGET", value: exercise.repsOrTime)
                     }
                     .frame(maxWidth: .infinity)
                     .background(.ultraThinMaterial)
