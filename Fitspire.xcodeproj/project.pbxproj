@@ -40,10 +40,9 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		5D50945E2FA153F50027A8C7 /* Exceptions for "Praxio" folder in "Fitspire" target */ = {
+		5D50945E2FA153F50027A8C7 /* Exceptions for "Fitspire" folder in "Fitspire" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				ExerciseVideos/burpee.mp4,
 				Info.plist,
 			);
 			target = 5D50941C2FA13FF90027A8C7 /* Fitspire */;
@@ -51,12 +50,12 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		5D5094592FA153F40027A8C7 /* Praxio */ = {
+		5D5094592FA153F40027A8C7 /* Fitspire */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				5D50945E2FA153F50027A8C7 /* Exceptions for "Praxio" folder in "Fitspire" target */,
+				5D50945E2FA153F50027A8C7 /* Exceptions for "Fitspire" folder in "Fitspire" target */,
 			);
-			path = Praxio;
+			path = Fitspire;
 			sourceTree = "<group>";
 		};
 		5DBEA6B42FCD910E00F0C27F /* FitspireWatch Watch App */ = {
@@ -87,7 +86,7 @@
 		5D5094142FA13FF90027A8C7 = {
 			isa = PBXGroup;
 			children = (
-				5D5094592FA153F40027A8C7 /* Praxio */,
+				5D5094592FA153F40027A8C7 /* Fitspire */,
 				5DEA7CD32FA7B50E00B20CCE /* Fitspire.app */,
 				5DBEA6B32FCD910E00F0C27F /* FitspireWatch Watch App.app */,
 				5DBEA6B42FCD910E00F0C27F /* FitspireWatch Watch App */,
@@ -112,7 +111,7 @@
 				5DBEA6BC2FCD910F00F0C27F /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				5D5094592FA153F40027A8C7 /* Praxio */,
+				5D5094592FA153F40027A8C7 /* Fitspire */,
 			);
 			name = Fitspire;
 			packageProductDependencies = (
@@ -357,7 +356,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_ENTITLEMENTS = Praxio/Praxio.entitlements;
+				CODE_SIGN_ENTITLEMENTS = Fitspire/Fitspire.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 4;
@@ -383,7 +382,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.navi.Praxio;
+				PRODUCT_BUNDLE_IDENTIFIER = com.navi.Fitspire;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -407,7 +406,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_ENTITLEMENTS = Praxio/Praxio.entitlements;
+				CODE_SIGN_ENTITLEMENTS = Fitspire/Fitspire.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 4;
@@ -433,7 +432,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.navi.Praxio;
+				PRODUCT_BUNDLE_IDENTIFIER = com.navi.Fitspire;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -469,7 +468,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.navi.Praxio.watchkitapp;
+				PRODUCT_BUNDLE_IDENTIFIER = com.navi.Fitspire.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
@@ -503,7 +502,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.navi.Praxio.watchkitapp;
+				PRODUCT_BUNDLE_IDENTIFIER = com.navi.Fitspire.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;

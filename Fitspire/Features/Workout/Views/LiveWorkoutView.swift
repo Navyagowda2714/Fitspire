@@ -5,7 +5,7 @@
 //  Created by Navyashree Byregowda on 01/05/2026.
 //
 
-/import SwiftUI
+import SwiftUI
 
 struct LiveWorkoutView: View {
     let exercise: WatchExercise   // or your HomeExercise type

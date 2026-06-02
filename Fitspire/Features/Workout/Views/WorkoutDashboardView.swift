@@ -148,7 +148,6 @@ struct WorkoutDashboardView: View {
             .fullScreenCover(item: $demoExercise) { ex in
                 HomeExerciseDemoView(
                     exercise: ex,
-<<<<<<< HEAD
                     onStartCamera: ex.poseType != nil ? {
                         cameraHomeExercise = ex     // save before clearing
                         demoExercise = nil           // dismiss demo
@@ -160,17 +159,6 @@ struct WorkoutDashboardView: View {
                         let e = ex
                         demoExercise = nil          // dismiss demo
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
-                            timerExercise = e       // then open timer
-=======
-                    onStartCamera: {
-                        guard ex.poseType != nil else { return }
-                        let poseType = ex.poseType!
-                        cameraHomeExercise = ex
-                        demoExercise = nil
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
-                            cameraExercise = poseType
->>>>>>> develop
-                        }
                     }
                 )
             }
