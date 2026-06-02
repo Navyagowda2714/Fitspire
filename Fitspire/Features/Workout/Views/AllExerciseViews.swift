@@ -84,7 +84,10 @@ final class PushUpViewModel2: NSObject, ObservableObject, AVCaptureVideoDataOutp
 
     private func setup() {
         guard !session.isRunning else { return }
-        session.beginConfiguration(); session.sessionPreset = .high
+        session.beginConfiguration()
+        session.inputs.forEach { session.removeInput($0) }
+        session.outputs.forEach { session.removeOutput($0) }
+        session.sessionPreset = .high
         guard let dev = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: cameraPosition),
               let inp = try? AVCaptureDeviceInput(device: dev), session.canAddInput(inp) else { return }
         session.addInput(inp)
@@ -374,7 +377,10 @@ final class LungeViewModel2: NSObject, ObservableObject, AVCaptureVideoDataOutpu
 
     private func setup() {
         guard !session.isRunning else { return }
-        session.beginConfiguration(); session.sessionPreset = .high
+        session.beginConfiguration()
+        session.inputs.forEach { session.removeInput($0) }
+        session.outputs.forEach { session.removeOutput($0) }
+        session.sessionPreset = .high
         guard let dev = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: cameraPosition),
               let inp = try? AVCaptureDeviceInput(device: dev), session.canAddInput(inp) else { return }
         session.addInput(inp)
@@ -644,7 +650,10 @@ final class GBViewModel: NSObject, ObservableObject, AVCaptureVideoDataOutputSam
 
     private func setup() {
         guard !session.isRunning else { return }
-        session.beginConfiguration(); session.sessionPreset = .high
+        session.beginConfiguration()
+        session.inputs.forEach { session.removeInput($0) }
+        session.outputs.forEach { session.removeOutput($0) }
+        session.sessionPreset = .high
         guard let dev = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: cameraPosition),
               let inp = try? AVCaptureDeviceInput(device: dev), session.canAddInput(inp) else { return }
         session.addInput(inp)
@@ -880,7 +889,10 @@ final class PlankViewModel2: NSObject, ObservableObject, AVCaptureVideoDataOutpu
 
     private func setup() {
         guard !session.isRunning else { return }
-        session.beginConfiguration(); session.sessionPreset = .high
+        session.beginConfiguration()
+        session.inputs.forEach { session.removeInput($0) }
+        session.outputs.forEach { session.removeOutput($0) }
+        session.sessionPreset = .high
         guard let dev = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: cameraPosition),
               let inp = try? AVCaptureDeviceInput(device: dev), session.canAddInput(inp) else { return }
         session.addInput(inp)
@@ -1130,7 +1142,10 @@ final class HKViewModel: NSObject, ObservableObject, AVCaptureVideoDataOutputSam
 
     private func setup() {
         guard !session.isRunning else { return }
-        session.beginConfiguration(); session.sessionPreset = .high
+        session.beginConfiguration()
+        session.inputs.forEach { session.removeInput($0) }
+        session.outputs.forEach { session.removeOutput($0) }
+        session.sessionPreset = .high
         guard let dev = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: cameraPosition),
               let inp = try? AVCaptureDeviceInput(device: dev), session.canAddInput(inp) else { return }
         session.addInput(inp)
