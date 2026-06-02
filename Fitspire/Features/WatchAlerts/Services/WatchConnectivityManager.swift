@@ -117,3 +117,23 @@ func sendPostureAlert(_ message: String) {
     WCSession.default.sendMessage(["postureAlert": message], replyHandler: nil)
 }
 
+
+// MARK: - Rep counter + posture alert helpers
+extension WatchConnectivityManager {
+    func sendRepUpdate(_ update: WatchRepUpdate) {
+        guard WCSession.default.activationState == .activated,
+              WCSession.default.isReachable else { return }
+        let data = (try? JSONEncoder().encode(update)) ?? Data()
+        WCSession.default.sendMessage(["repUpdate": data], replyHandler: nil)
+    }
+
+    func sendPostureAlert(_ message: String) {
+        guard WCSession.default.activationState == .activated else { return }
+        let msg: [String: Any] = ["postureAlert": message]
+        if WCSession.default.isReachable {
+            WCSession.default.sendMessage(msg, replyHandler: nil)
+        } else {
+            WCSession.default.transferUserInfo(msg)
+        }
+    }
+}
