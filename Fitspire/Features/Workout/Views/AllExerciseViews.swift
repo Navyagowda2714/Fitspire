@@ -83,7 +83,7 @@ final class PushUpViewModel2: NSObject, ObservableObject, AVCaptureVideoDataOutp
     }
 
     private func setup() {
-        guard !session.isRunning else { return }
+        if session.isRunning { session.stopRunning() }
         session.beginConfiguration()
         session.inputs.forEach { session.removeInput($0) }
         session.outputs.forEach { session.removeOutput($0) }
@@ -376,7 +376,7 @@ final class LungeViewModel2: NSObject, ObservableObject, AVCaptureVideoDataOutpu
     }
 
     private func setup() {
-        guard !session.isRunning else { return }
+        if session.isRunning { session.stopRunning() }
         session.beginConfiguration()
         session.inputs.forEach { session.removeInput($0) }
         session.outputs.forEach { session.removeOutput($0) }
@@ -649,7 +649,7 @@ final class GBViewModel: NSObject, ObservableObject, AVCaptureVideoDataOutputSam
     }
 
     private func setup() {
-        guard !session.isRunning else { return }
+        if session.isRunning { session.stopRunning() }
         session.beginConfiguration()
         session.inputs.forEach { session.removeInput($0) }
         session.outputs.forEach { session.removeOutput($0) }
@@ -888,7 +888,7 @@ final class PlankViewModel2: NSObject, ObservableObject, AVCaptureVideoDataOutpu
     }
 
     private func setup() {
-        guard !session.isRunning else { return }
+        if session.isRunning { session.stopRunning() }
         session.beginConfiguration()
         session.inputs.forEach { session.removeInput($0) }
         session.outputs.forEach { session.removeOutput($0) }
@@ -1141,7 +1141,7 @@ final class HKViewModel: NSObject, ObservableObject, AVCaptureVideoDataOutputSam
     }
 
     private func setup() {
-        guard !session.isRunning else { return }
+        if session.isRunning { session.stopRunning() }
         session.beginConfiguration()
         session.inputs.forEach { session.removeInput($0) }
         session.outputs.forEach { session.removeOutput($0) }
