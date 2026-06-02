@@ -154,7 +154,7 @@ struct WorkoutDashboardView: View {
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
                             introExercise = ex       // open intro screen first
                         }
-                    } : nil
+                    } : {}
 
                 )
             }
