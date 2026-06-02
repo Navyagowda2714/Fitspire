@@ -137,3 +137,16 @@ extension WatchConnectivityManager {
         }
     }
 }
+
+extension WatchConnectivityManager {
+    func sendFormAlert(exercise: String, issue: String) {
+        guard WCSession.default.activationState == .activated else { return }
+        let msg: [String: Any] = ["exercise": exercise, "issue": issue]
+        if WCSession.default.isReachable {
+            WCSession.default.sendMessage(msg, replyHandler: nil)
+        } else {
+            WCSession.default.transferUserInfo(msg)
+        }
+    }
+}
+
