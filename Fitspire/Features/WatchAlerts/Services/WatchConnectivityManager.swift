@@ -117,17 +117,3 @@ func sendPostureAlert(_ message: String) {
     WCSession.default.sendMessage(["postureAlert": message], replyHandler: nil)
 }
 
-// In session(_:didReceiveMessage:) on Watch side — add:
-if let msg = message["postureAlert"] as? String {
-    DispatchQueue.main.async {
-        WKInterfaceDevice.current().play(.failure)  // haptic
-        NotificationCenter.default.post(name: .postureAlert, object: msg)
-    }
-}
-if let data = message["repUpdate"] as? Data,
-   let update = try? JSONDecoder().decode(WatchRepUpdate.self, from: data) {
-    DispatchQueue.main.async {
-        NotificationCenter.default.post(name: .repUpdate, object: update)
-        WKInterfaceDevice.current().play(.click)  // haptic on rep
-    }
-}
