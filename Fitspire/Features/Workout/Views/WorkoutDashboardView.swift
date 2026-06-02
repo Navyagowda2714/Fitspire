@@ -157,8 +157,10 @@ struct WorkoutDashboardView: View {
                     } : nil,
                     onStartTimer: {
                         let e = ex
-                        demoExercise = nil          // dismiss demo
+                        demoExercise = nil
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                            timerExercise = e
+                        }
                     }
                 )
             }
