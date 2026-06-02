@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct LiveWorkoutView: View {
-    let exercise: WatchExercise   // or your HomeExercise type
+    let exercise: HomeExercise   // or your HomeExercise type
     @StateObject private var vm = RepCounterViewModel()
     @Environment(\.dismiss) var dismiss
 
