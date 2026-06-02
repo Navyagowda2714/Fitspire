@@ -131,7 +131,3 @@ if let data = message["repUpdate"] as? Data,
         WKInterfaceDevice.current().play(.click)  // haptic on rep
     }
 }
-
-// Add to Notification.Name
-static let postureAlert = Notification.Name("postureAlert")
-static let repUpdate = Notification.Name("repUpdate")

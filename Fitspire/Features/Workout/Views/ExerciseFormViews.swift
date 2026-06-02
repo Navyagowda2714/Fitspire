@@ -171,7 +171,6 @@ struct ExerciseLiveView: View {
         ZStack(alignment: .topLeading) {
             Group {
                 switch exercise.name {
-<<<<<<< HEAD
                 // ── NEW improved views from AllExerciseViews.swift ──────────
                 case "Bodyweight Squat":  SquatCameraView()        // ContentView quality
                 case "Plank":             PlankCameraView2()       // improved + crash-safe
@@ -181,16 +180,6 @@ struct ExerciseLiveView: View {
                 case "High Knees":        HKCameraView()           // improved + crash-safe
                 case "Mountain Climber":  MountainClimberCameraView() // existing
                 default:                  SquatCameraView()        // safe fallback
-=======
-                case "Bodyweight Squat":  SquatCameraView()
-                case "Plank":             PlankCameraView2()
-                case "Push-Up":           PushUpCameraView2()
-                case "Reverse Lunge":     LungeCameraView2()
-                case "Glute Bridge":      GBCameraView()
-                case "Mountain Climber":  MountainClimberCameraView()
-                case "High Knees":        HKCameraView()
-                default:                  SquatCameraView()
->>>>>>> develop
                 }
             }
             // Back button on top of every view
