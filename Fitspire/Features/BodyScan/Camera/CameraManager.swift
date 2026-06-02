@@ -27,7 +27,7 @@ protocol CameraManagerDelegate: AnyObject, Sendable {
 final class CameraManager: NSObject, ObservableObject {
     nonisolated(unsafe) weak var delegate: CameraManagerDelegate?
 
-    private let session = AVCaptureSession()
+    let session = AVCaptureSession()
     private let videoOutput = AVCaptureVideoDataOutput()
     private let sessionQueue = DispatchQueue(label: "camera.session.queue")
 
