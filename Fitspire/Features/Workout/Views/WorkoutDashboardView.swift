@@ -155,13 +155,7 @@ struct WorkoutDashboardView: View {
                             introExercise = ex       // open intro screen first
                         }
                     } : nil,
-                    onStartTimer: {
-                        let e = ex
-                        demoExercise = nil
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
-                            timerExercise = e
-                        }
-                    }
+
                 )
             }
 
