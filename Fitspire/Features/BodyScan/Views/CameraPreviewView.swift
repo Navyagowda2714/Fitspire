@@ -1,38 +1,19 @@
-//CameraPreviewView.swift
 //
-//  FitnessAI
+//  CameraPreviewView.swift
+//  Fitspire
 //
-//  Created by Navyashree Byregowda on 01/05/2026.
-//
-
 
 import SwiftUI
 import AVFoundation
 
 struct CameraPreviewView: UIViewRepresentable {
-    let cameraManager: CameraManager
+    let session: AVCaptureSession
 
     func makeUIView(context: Context) -> PreviewUIView {
         let view = PreviewUIView()
-        view.backgroundColor = .black
-        let layer = cameraManager.makePreviewLayer()
-        view.previewLayer = layer
-        view.layer.addSublayer(layer)
+        view.session = session
         return view
     }
-
-    func updateUIView(_ uiView: PreviewUIView, context: Context) {
-        DispatchQueue.main.async {
-            uiView.previewLayer?.frame = uiView.bounds
-        }
-    }
+    func updateUIView(_ uiView: PreviewUIView, context: Context) {}
 }
-
-final class PreviewUIView: UIView {
-    var previewLayer: AVCaptureVideoPreviewLayer?
-
-    override func layoutSubviews() {
-        super.layoutSubviews()
-        previewLayer?.frame = bounds
-    }
-}
+// PreviewUIView is defined in CameraPreview.swift
