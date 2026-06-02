@@ -240,7 +240,7 @@ struct HomeExerciseLibrary {
         difficulty: .beginner,
         sets: 3, repsOrTime: "10 each leg", restSeconds: 60, calories: 6,
         isBodyweight: true,
-        poseType: nil,          // no pose detection — uses guided timer
+        poseType: .lunge,          // no pose detection — uses guided timer
         formCues: [
             "Stand tall with feet hip-width apart",
             "Step one foot BACK (reverse lunge is easier on the knee than forward)",
@@ -277,7 +277,7 @@ struct HomeExerciseLibrary {
         difficulty: .beginner,
         sets: 3, repsOrTime: "15 reps", restSeconds: 45, calories: 4,
         isBodyweight: true,
-        poseType: nil,
+        poseType: .gluteBridge,
         formCues: [
             "Lie on your back, knees bent, feet flat on the floor hip-width apart",
             "Press your lower back gently into the floor before lifting",
@@ -425,7 +425,7 @@ struct HomeExerciseLibrary {
         difficulty: .beginner,
         sets: 3, repsOrTime: "30 sec", restSeconds: 30, calories: 9,
         isBodyweight: true,
-        poseType: nil,
+        poseType: .highKnees,
         formCues: [
             "Stand tall with feet hip-width apart",
             "Drive knees up alternately to hip height — like running in place",
