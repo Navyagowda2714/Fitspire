@@ -43,6 +43,7 @@ struct PushUpPostureResult {
 
 final class PushUpViewModel2: NSObject, ObservableObject, AVCaptureVideoDataOutputSampleBufferDelegate {
     let session = AVCaptureSession()
+    private let sessionQueue = DispatchQueue(label: "fitspire.pushup.session", qos: .userInitiated)
     @Published var bodyPoints: [VNHumanBodyPoseObservation.JointName: CGPoint] = [:]
     @Published var result = PushUpPostureResult()
     @Published var reps = 0
@@ -63,12 +64,12 @@ final class PushUpViewModel2: NSObject, ObservableObject, AVCaptureVideoDataOutp
     private var stableFrames = 0; private var lastIssue: PushUpIssue2 = .detecting
     private var alertTimer: Timer?
 
-    func start() { AVCaptureDevice.requestAccess(for: .video) { g in guard g else { return }; DispatchQueue.global(qos: .userInitiated).async { self.setup() } } }
-    func stop()  { session.stopRunning() }
+    func start() { AVCaptureDevice.requestAccess(for: .video) { [weak self] granted in guard granted else { return }; self?.sessionQueue.async { self?.setup() } } }
+    func stop() { sessionQueue.async { [weak self] in self?.session.stopRunning() } }
     func resetReps() { DispatchQueue.main.async { self.reps = 0; self.bottomReached = false; self.repStarted = false; self.validBottomFrames = 0; self.validTopFrames = 0; self.hadHipError = false; self.hipErrorFrames = 0 } }
 
     func switchCamera() {
-        DispatchQueue.global(qos: .userInitiated).async {
+        sessionQueue.async {
             let pos: AVCaptureDevice.Position = self.cameraPosition == .front ? .back : .front
             self.isConfiguring = true
             self.session.beginConfiguration()
@@ -77,13 +78,14 @@ final class PushUpViewModel2: NSObject, ObservableObject, AVCaptureVideoDataOutp
                   let inp = try? AVCaptureDeviceInput(device: dev), self.session.canAddInput(inp)
             else { self.session.commitConfiguration(); self.isConfiguring = false; return }
             self.session.addInput(inp); self.session.commitConfiguration()
+            self.session.startRunning()
             self.isConfiguring = false
             DispatchQueue.main.async { self.cameraPosition = pos }
         }
     }
 
     private func setup() {
-        if session.isRunning { session.stopRunning() }
+        session.stopRunning()
         session.beginConfiguration()
         session.inputs.forEach { session.removeInput($0) }
         session.outputs.forEach { session.removeOutput($0) }
@@ -96,7 +98,7 @@ final class PushUpViewModel2: NSObject, ObservableObject, AVCaptureVideoDataOutp
         out.alwaysDiscardsLateVideoFrames = true
         if session.canAddOutput(out) { session.addOutput(out) }
         session.commitConfiguration()
-        DispatchQueue.global(qos: .userInitiated).async { self.session.startRunning() }
+        session.startRunning()
     }
 
     func captureOutput(_ output: AVCaptureOutput, didOutput sb: CMSampleBuffer, from conn: AVCaptureConnection) {
@@ -325,6 +327,7 @@ struct LungePostureResult {
 
 final class LungeViewModel2: NSObject, ObservableObject, AVCaptureVideoDataOutputSampleBufferDelegate {
     let session = AVCaptureSession()
+    private let sessionQueue = DispatchQueue(label: "fitspire.lunge.session", qos: .userInitiated)
     @Published var bodyPoints: [VNHumanBodyPoseObservation.JointName: CGPoint] = [:]
     @Published var result = LungePostureResult()
     @Published var reps = 0
@@ -344,24 +347,14 @@ final class LungeViewModel2: NSObject, ObservableObject, AVCaptureVideoDataOutpu
     private var stableFrames = 0; private var lastIssue: LungeIssue2 = .detecting
     private var alertTimer: Timer?
 
-    func start() { AVCaptureDevice.requestAccess(for: .video) { g in guard g else { return }; DispatchQueue.global(qos: .userInitiated).async { self.setup() } } }
+    func start() { AVCaptureDevice.requestAccess(for: .video) { [weak self] granted in guard granted else { return }; self?.sessionQueue.async { self?.setup() } } }
     func stop() {
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            guard let self = self else { return }
-            guard !self.isConfiguring else {
-                // Session is mid-configuration — wait briefly then stop
-                DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: .now() + 0.3) {
-                    self.session.stopRunning()
-                }
-                return
-            }
-            self.session.stopRunning()
-        }
+        DispatchQueue.global(qos: .background).async { [weak self] in self?.session.stopRunning() }
     }
     func resetReps() { DispatchQueue.main.async { self.reps = 0; self.bottomReached = false; self.repStarted = false; self.validBottomFrames = 0; self.validStandFrames = 0; self.hadKneeError = false; self.kneeErrorFrames = 0 } }
 
     func switchCamera() {
-        DispatchQueue.global(qos: .userInitiated).async {
+        sessionQueue.async {
             let pos: AVCaptureDevice.Position = self.cameraPosition == .front ? .back : .front
             self.isConfiguring = true
             self.session.beginConfiguration()
@@ -370,13 +363,14 @@ final class LungeViewModel2: NSObject, ObservableObject, AVCaptureVideoDataOutpu
                   let inp = try? AVCaptureDeviceInput(device: dev), self.session.canAddInput(inp)
             else { self.session.commitConfiguration(); self.isConfiguring = false; return }
             self.session.addInput(inp); self.session.commitConfiguration()
+            self.session.startRunning()
             self.isConfiguring = false
             DispatchQueue.main.async { self.cameraPosition = pos }
         }
     }
 
     private func setup() {
-        if session.isRunning { session.stopRunning() }
+        session.stopRunning()
         session.beginConfiguration()
         session.inputs.forEach { session.removeInput($0) }
         session.outputs.forEach { session.removeOutput($0) }
@@ -389,7 +383,7 @@ final class LungeViewModel2: NSObject, ObservableObject, AVCaptureVideoDataOutpu
         out.alwaysDiscardsLateVideoFrames = true
         if session.canAddOutput(out) { session.addOutput(out) }
         session.commitConfiguration()
-        DispatchQueue.global(qos: .userInitiated).async { self.session.startRunning() }
+        session.startRunning()
     }
 
     func captureOutput(_ output: AVCaptureOutput, didOutput sb: CMSampleBuffer, from conn: AVCaptureConnection) {
@@ -601,6 +595,7 @@ struct GBPostureResult {
 
 final class GBViewModel: NSObject, ObservableObject, AVCaptureVideoDataOutputSampleBufferDelegate {
     let session = AVCaptureSession()
+    private let sessionQueue = DispatchQueue(label: "fitspire.gb.session", qos: .userInitiated)
     @Published var bodyPoints: [VNHumanBodyPoseObservation.JointName: CGPoint] = [:]
     @Published var result = GBPostureResult()
     @Published var reps = 0
@@ -617,24 +612,14 @@ final class GBViewModel: NSObject, ObservableObject, AVCaptureVideoDataOutputSam
     private var validTopFrames = 0; private var validDownFrames = 0
     private var alertTimer: Timer?
 
-    func start() { AVCaptureDevice.requestAccess(for: .video) { g in guard g else { return }; DispatchQueue.global(qos: .userInitiated).async { self.setup() } } }
+    func start() { AVCaptureDevice.requestAccess(for: .video) { [weak self] granted in guard granted else { return }; self?.sessionQueue.async { self?.setup() } } }
     func stop() {
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            guard let self = self else { return }
-            guard !self.isConfiguring else {
-                // Session is mid-configuration — wait briefly then stop
-                DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: .now() + 0.3) {
-                    self.session.stopRunning()
-                }
-                return
-            }
-            self.session.stopRunning()
-        }
+        DispatchQueue.global(qos: .background).async { [weak self] in self?.session.stopRunning() }
     }
     func resetReps() { DispatchQueue.main.async { self.reps = 0; self.topReached = false; self.repStarted = false; self.validTopFrames = 0; self.validDownFrames = 0 } }
 
     func switchCamera() {
-        DispatchQueue.global(qos: .userInitiated).async {
+        sessionQueue.async {
             let pos: AVCaptureDevice.Position = self.cameraPosition == .front ? .back : .front
             self.isConfiguring = true
             self.session.beginConfiguration()
@@ -643,13 +628,14 @@ final class GBViewModel: NSObject, ObservableObject, AVCaptureVideoDataOutputSam
                   let inp = try? AVCaptureDeviceInput(device: dev), self.session.canAddInput(inp)
             else { self.session.commitConfiguration(); self.isConfiguring = false; return }
             self.session.addInput(inp); self.session.commitConfiguration()
+            self.session.startRunning()
             self.isConfiguring = false
             DispatchQueue.main.async { self.cameraPosition = pos }
         }
     }
 
     private func setup() {
-        if session.isRunning { session.stopRunning() }
+        session.stopRunning()
         session.beginConfiguration()
         session.inputs.forEach { session.removeInput($0) }
         session.outputs.forEach { session.removeOutput($0) }
@@ -662,7 +648,7 @@ final class GBViewModel: NSObject, ObservableObject, AVCaptureVideoDataOutputSam
         out.alwaysDiscardsLateVideoFrames = true
         if session.canAddOutput(out) { session.addOutput(out) }
         session.commitConfiguration()
-        DispatchQueue.global(qos: .userInitiated).async { self.session.startRunning() }
+        session.startRunning()
     }
 
     func captureOutput(_ output: AVCaptureOutput, didOutput sb: CMSampleBuffer, from conn: AVCaptureConnection) {
@@ -856,6 +842,7 @@ struct PlankPostureResult {
 
 final class PlankViewModel2: NSObject, ObservableObject, AVCaptureVideoDataOutputSampleBufferDelegate {
     let session = AVCaptureSession()
+    private let sessionQueue = DispatchQueue(label: "fitspire.plank.session", qos: .userInitiated)
     @Published var bodyPoints: [VNHumanBodyPoseObservation.JointName: CGPoint] = [:]
     @Published var result = PlankPostureResult()
     @Published var holdSeconds = 0
@@ -868,12 +855,15 @@ final class PlankViewModel2: NSObject, ObservableObject, AVCaptureVideoDataOutpu
     private var holdTimer: Timer?
     private var alertTimer: Timer?
 
-    func start() { AVCaptureDevice.requestAccess(for: .video) { g in guard g else { return }; DispatchQueue.global(qos: .userInitiated).async { self.setup() } } }
-    func stop() { session.stopRunning(); holdTimer?.invalidate(); alertTimer?.invalidate() }
+    func start() { AVCaptureDevice.requestAccess(for: .video) { [weak self] granted in guard granted else { return }; self?.sessionQueue.async { self?.setup() } } }
+    func stop() {
+        sessionQueue.async { [weak self] in self?.session.stopRunning() }
+        DispatchQueue.main.async { self.holdTimer?.invalidate(); self.alertTimer?.invalidate() }
+    }
     func resetHold() { DispatchQueue.main.async { self.holdSeconds = 0; self.isHolding = false; self.holdTimer?.invalidate() } }
 
     func switchCamera() {
-        DispatchQueue.global(qos: .userInitiated).async {
+        sessionQueue.async {
             let pos: AVCaptureDevice.Position = self.cameraPosition == .front ? .back : .front
             self.isConfiguring = true
             self.session.beginConfiguration()
@@ -882,13 +872,14 @@ final class PlankViewModel2: NSObject, ObservableObject, AVCaptureVideoDataOutpu
                   let inp = try? AVCaptureDeviceInput(device: dev), self.session.canAddInput(inp)
             else { self.session.commitConfiguration(); self.isConfiguring = false; return }
             self.session.addInput(inp); self.session.commitConfiguration()
+            self.session.startRunning()
             self.isConfiguring = false
             DispatchQueue.main.async { self.cameraPosition = pos }
         }
     }
 
     private func setup() {
-        if session.isRunning { session.stopRunning() }
+        session.stopRunning()
         session.beginConfiguration()
         session.inputs.forEach { session.removeInput($0) }
         session.outputs.forEach { session.removeOutput($0) }
@@ -901,7 +892,7 @@ final class PlankViewModel2: NSObject, ObservableObject, AVCaptureVideoDataOutpu
         out.alwaysDiscardsLateVideoFrames = true
         if session.canAddOutput(out) { session.addOutput(out) }
         session.commitConfiguration()
-        DispatchQueue.global(qos: .userInitiated).async { self.session.startRunning() }
+        session.startRunning()
     }
 
     func captureOutput(_ output: AVCaptureOutput, didOutput sb: CMSampleBuffer, from conn: AVCaptureConnection) {
@@ -1097,6 +1088,7 @@ struct HKPostureResult {
 
 final class HKViewModel: NSObject, ObservableObject, AVCaptureVideoDataOutputSampleBufferDelegate {
     let session = AVCaptureSession()
+    private let sessionQueue = DispatchQueue(label: "fitspire.hk.session", qos: .userInitiated)
     @Published var bodyPoints: [VNHumanBodyPoseObservation.JointName: CGPoint] = [:]
     @Published var result = HKPostureResult()
     @Published var reps = 0
@@ -1109,24 +1101,14 @@ final class HKViewModel: NSObject, ObservableObject, AVCaptureVideoDataOutputSam
     private var kneeLiftCount = 0
     private var alertTimer: Timer?
 
-    func start() { AVCaptureDevice.requestAccess(for: .video) { g in guard g else { return }; DispatchQueue.global(qos: .userInitiated).async { self.setup() } } }
+    func start() { AVCaptureDevice.requestAccess(for: .video) { [weak self] granted in guard granted else { return }; self?.sessionQueue.async { self?.setup() } } }
     func stop() {
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            guard let self = self else { return }
-            guard !self.isConfiguring else {
-                // Session is mid-configuration — wait briefly then stop
-                DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: .now() + 0.3) {
-                    self.session.stopRunning()
-                }
-                return
-            }
-            self.session.stopRunning()
-        }
+        DispatchQueue.global(qos: .background).async { [weak self] in self?.session.stopRunning() }
     }
     func resetReps() { DispatchQueue.main.async { self.reps = 0; self.kneeLiftCount = 0 } }
 
     func switchCamera() {
-        DispatchQueue.global(qos: .userInitiated).async {
+        sessionQueue.async {
             let pos: AVCaptureDevice.Position = self.cameraPosition == .front ? .back : .front
             self.isConfiguring = true
             self.session.beginConfiguration()
@@ -1135,13 +1117,14 @@ final class HKViewModel: NSObject, ObservableObject, AVCaptureVideoDataOutputSam
                   let inp = try? AVCaptureDeviceInput(device: dev), self.session.canAddInput(inp)
             else { self.session.commitConfiguration(); self.isConfiguring = false; return }
             self.session.addInput(inp); self.session.commitConfiguration()
+            self.session.startRunning()
             self.isConfiguring = false
             DispatchQueue.main.async { self.cameraPosition = pos }
         }
     }
 
     private func setup() {
-        if session.isRunning { session.stopRunning() }
+        session.stopRunning()
         session.beginConfiguration()
         session.inputs.forEach { session.removeInput($0) }
         session.outputs.forEach { session.removeOutput($0) }
@@ -1154,7 +1137,7 @@ final class HKViewModel: NSObject, ObservableObject, AVCaptureVideoDataOutputSam
         out.alwaysDiscardsLateVideoFrames = true
         if session.canAddOutput(out) { session.addOutput(out) }
         session.commitConfiguration()
-        DispatchQueue.global(qos: .userInitiated).async { self.session.startRunning() }
+        session.startRunning()
     }
 
     func captureOutput(_ output: AVCaptureOutput, didOutput sb: CMSampleBuffer, from conn: AVCaptureConnection) {

@@ -5,29 +5,13 @@
 //  Created by Navyashree Byregowda on 25/05/2026.
 //
 
-//
-//  AIFormCheckIntroView.swift
-//  Praxio
-//
-//  ──────────────────────────────────────────────────────────────────────────
-//  PLACEHOLDER SCREEN — Ready for design work
-//  ──────────────────────────────────────────────────────────────────────────
-//
-//  This screen appears AFTER the user taps "Start with AI Form Check"
-//  and BEFORE the live camera view opens.
-//
+
 //  Current state: blank dark screen with a Continue button.
 //  Hand this file to your designer/developer to build out the UI.
 //
 //  HOW IT FITS IN THE FLOW:
 //  HomeExerciseDemoView  →  AIFormCheckIntroView  →  ExerciseLiveView (camera)
 //
-//  TO CUSTOMISE:
-//  • Add instructions, tips, camera permission explanation, countdown etc.
-//  • The exercise name is available via: exercise.name
-//  • Call onContinue() when the user is ready to open the camera
-//
-//  ──────────────────────────────────────────────────────────────────────────
 
 import SwiftUI
 

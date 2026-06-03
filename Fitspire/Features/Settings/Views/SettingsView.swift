@@ -5,19 +5,6 @@
 //  Created by Navyashree Byregowda on 06/05/2026.
 //
 
-//
-//  SettingsView.swift
-//  FitnessAI
-//
-//  Created by Navyashree Byregowda on 06/05/2026.
-//
-
-//
-//  SettingsView.swift
-//  FitnessAI
-//
-//  Created by Navyashree Byregowda on 06/05/2026.
-//
 
 
 import SwiftUI
