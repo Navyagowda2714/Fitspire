@@ -5,6 +5,12 @@
 //  Created by Navyashree Byregowda on 03/06/2026.
 //
 
+//
+//  GoalDashboardView.swift
+//  Fitspire
+//
+//  Created by Navyashree Byregowda on 03/06/2026.
+//
 
 import SwiftUI
 
@@ -18,10 +24,11 @@ enum WeekDayStatus {
 
 struct WeekDayItem: Identifiable {
     let id = UUID()
-    let shortName: String       // MON, TUE …
+    let shortName:    String       // MON, TUE …
     let workoutTitle: String
-    let duration: String        // "" for rest days
-    let status: WeekDayStatus
+    let duration:     String       // "" for rest days
+    let status:       WeekDayStatus
+    let date:         Date         // ← NEW: actual calendar date for the sheet
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -32,12 +39,10 @@ struct GoalDashboardView: View {
 
     @EnvironmentObject var appState: AppState
 
-    // Lightweight stats stored in UserDefaults — no new model needed
-    @AppStorage("fitspire_streak")        private var streak       = 0
-    @AppStorage("fitspire_xp")            private var xp           = 0
+    @AppStorage("fitspire_streak")        private var streak        = 0
+    @AppStorage("fitspire_xp")            private var xp            = 0
     @AppStorage("fitspire_totalWorkouts") private var totalWorkouts = 0
 
-    // Same state pattern as your existing WorkoutDashboardView
     @State private var demoExercise:       HomeExercise? = nil
     @State private var cameraExercise:     ExerciseType? = nil
     @State private var selectedCategory:   HomeExercise.Category? = nil
@@ -69,12 +74,12 @@ struct GoalDashboardView: View {
     }
 
     private var weekDays: [WeekDayItem] {
-        let cal      = Calendar.current
-        let today    = Date()
-        let weekday  = cal.component(.weekday, from: today) - 1  // 0=Sun
+        let cal     = Calendar.current
+        let today   = Date()
+        let weekday = cal.component(.weekday, from: today) - 1  // 0=Sun
         guard let startOfWeek = cal.date(byAdding: .day, value: -weekday, to: today) else { return [] }
 
-        let names    = ["SUN","MON","TUE","WED","THU","FRI","SAT"]
+        let names = ["SUN","MON","TUE","WED","THU","FRI","SAT"]
         let rawPlan: [(String, String, WeekDayStatus)] = [
             ("Rest",              "",       .rest),
             ("HIIT Cardio",       "25 min", .completed),
@@ -90,10 +95,11 @@ struct GoalDashboardView: View {
             let isToday = cal.isDateInToday(date)
             let raw = rawPlan[i]
             return WeekDayItem(
-                shortName:     names[i],
-                workoutTitle:  raw.0,
-                duration:      raw.1,
-                status:        isToday ? .today : raw.2
+                shortName:    names[i],
+                workoutTitle: raw.0,
+                duration:     raw.1,
+                status:       isToday ? .today : raw.2,
+                date:         date              // ← pass real date
             )
         }
     }
@@ -137,8 +143,6 @@ struct GoalDashboardView: View {
                 }
             }
             .navigationBarHidden(true)
-
-            // ── Same fullScreenCover chain as your WorkoutDashboardView ────────
             .fullScreenCover(item: $demoExercise) { ex in
                 HomeExerciseDemoView(
                     exercise: ex,
@@ -207,9 +211,9 @@ struct GoalDashboardView: View {
 
     private var statsRow: some View {
         HStack(spacing: 10) {
-            statPill(icon: "flame.fill",  value: "\(streak)d",       label: "STREAK",   accent: Color(hex: "D85A30"))
-            statPill(icon: "bolt.fill",   value: "\(xp)",             label: "XP",       accent: Color.appCyan)
-            statPill(icon: "trophy.fill", value: "\(totalWorkouts)",  label: "WORKOUTS", accent: Color(hex: "1D9E75"))
+            statPill(icon: "flame.fill",  value: "\(streak)d",      label: "STREAK",   accent: Color(hex: "D85A30"))
+            statPill(icon: "bolt.fill",   value: "\(xp)",            label: "XP",       accent: Color.appCyan)
+            statPill(icon: "trophy.fill", value: "\(totalWorkouts)", label: "WORKOUTS", accent: Color(hex: "1D9E75"))
         }
     }
 
@@ -256,7 +260,9 @@ struct GoalDashboardView: View {
                 Text(item.workoutTitle)
                     .font(.system(size: 22, weight: .heavy, design: .rounded))
                     .foregroundStyle(.white)
-                Text(item.duration.isEmpty ? (appState.selectedGoal?.rawValue ?? "Stay active") : "\(item.duration) · Stay focused")
+                Text(item.duration.isEmpty
+                     ? (appState.selectedGoal?.rawValue ?? "Stay active")
+                     : "\(item.duration) · Stay focused")
                     .font(.system(size: 14))
                     .foregroundStyle(Color.appT3)
             } else {
@@ -325,7 +331,6 @@ struct ZigzagWeekView: View {
 
     var body: some View {
         ZStack(alignment: .top) {
-            // Dashed centre line
             GeometryReader { geo in
                 Path { p in
                     let x = geo.size.width / 2
@@ -346,9 +351,15 @@ struct ZigzagWeekView: View {
     }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// MARK: - ZigzagNode  (tappable — opens DayDetailSheet)
+// ─────────────────────────────────────────────────────────────────────────────
+
 struct ZigzagNode: View {
     let day:    WeekDayItem
     let onLeft: Bool
+
+    @State private var showDetail = false   // ← drives the sheet
 
     private var fill: Color {
         switch day.status {
@@ -378,22 +389,52 @@ struct ZigzagNode: View {
         }
     }
 
+    // Convert WeekDayStatus → DayStatus for DayDetailSheet
+    private var dayStatus: DayStatus {
+        switch day.status {
+        case .completed: return .completed
+        case .today:     return .today
+        case .rest:      return .rest
+        case .locked:    return .locked
+        case .upcoming:  return .upcoming
+        }
+    }
+
+    // Build a CalendarSession from the WeekDayItem for DayDetailSheet
+    private var calSession: CalendarSession? {
+        CalendarSession(
+            title:    day.workoutTitle.isEmpty ? "Rest & Recover" : day.workoutTitle,
+            duration: day.duration,
+            status:   dayStatus,
+            calories: 0
+        )
+    }
+
     var body: some View {
         HStack(spacing: 0) {
             if onLeft {
-                nodeContent.frame(maxWidth: .infinity, alignment: .trailing).padding(.trailing, 8)
+                nodeContent
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+                    .padding(.trailing, 8)
                 Spacer().frame(width: UIScreen.main.bounds.width / 2)
             } else {
                 Spacer().frame(width: UIScreen.main.bounds.width / 2)
-                nodeContent.frame(maxWidth: .infinity, alignment: .leading).padding(.leading, 8)
+                nodeContent
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.leading, 8)
             }
+        }
+        // Tap anywhere on the node row to open detail
+        .contentShape(Rectangle())
+        .onTapGesture { showDetail = true }
+        .sheet(isPresented: $showDetail) {
+            DayDetailSheet(date: day.date, session: calSession)
         }
     }
 
     private var nodeContent: some View {
         VStack(spacing: 6) {
             ZStack {
-                // Glow ring for today
                 if day.status == .today {
                     Circle()
                         .stroke(Color.appCyan.opacity(0.35), lineWidth: 3)
@@ -411,7 +452,9 @@ struct ZigzagNode: View {
                 .font(.system(size: 10, weight: .bold))
                 .foregroundStyle(day.status == .today ? Color.appCyan : Color.appT3)
                 .tracking(1.5)
-            Text(day.duration.isEmpty ? day.workoutTitle : "\(day.workoutTitle) · \(day.duration)")
+            Text(day.duration.isEmpty
+                 ? day.workoutTitle
+                 : "\(day.workoutTitle) · \(day.duration)")
                 .font(.system(size: 10))
                 .foregroundStyle(Color.appT4)
                 .lineLimit(1)

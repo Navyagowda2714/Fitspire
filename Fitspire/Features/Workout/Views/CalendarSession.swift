@@ -459,6 +459,7 @@ struct CalendarRowCard: View {
     let date:       Date
     let session:    CalendarSession?
     let isSelected: Bool
+    @State private var showDetail = false   // ← NEW
 
     private var dayLabel: String {
         let f = DateFormatter(); f.dateFormat = "EEE d"; return f.string(from: date)
@@ -485,59 +486,65 @@ struct CalendarRowCard: View {
     }
 
     var body: some View {
-        HStack(spacing: 14) {
-            VStack(spacing: 2) {
-                Text(dayLabel.components(separatedBy: " ").first ?? "")
-                    .font(.system(size: 9, weight: .bold))
-                    .foregroundStyle(isToday ? Color.appCyan : Color.appT4)
-                    .tracking(1)
-                Text(dayLabel.components(separatedBy: " ").last ?? "")
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundStyle(isToday ? Color.appCyan : Color.appT2)
-            }
-            .frame(width: 38)
+        Button { showDetail = true } label: {   // ← WRAPPED
+            HStack(spacing: 14) {
+                VStack(spacing: 2) {
+                    Text(dayLabel.components(separatedBy: " ").first ?? "")
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundStyle(isToday ? Color.appCyan : Color.appT4)
+                        .tracking(1)
+                    Text(dayLabel.components(separatedBy: " ").last ?? "")
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundStyle(isToday ? Color.appCyan : Color.appT2)
+                }
+                .frame(width: 38)
 
-            if let s = session {
-                Rectangle()
-                    .fill(accent)
-                    .frame(width: 3)
-                    .clipShape(Capsule())
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(s.title)
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(.white)
-                    if !s.duration.isEmpty {
-                        HStack(spacing: 6) {
-                            Text(s.duration)
-                                .font(.system(size: 11))
-                                .foregroundStyle(Color.appT3)
-                            if s.calories > 0 {
-                                Text("· ~\(s.calories) kcal")
+                if let s = session {
+                    Rectangle()
+                        .fill(accent)
+                        .frame(width: 3)
+                        .clipShape(Capsule())
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(s.title)
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(.white)
+                        if !s.duration.isEmpty {
+                            HStack(spacing: 6) {
+                                Text(s.duration)
                                     .font(.system(size: 11))
-                                    .foregroundStyle(Color.appT4)
+                                    .foregroundStyle(Color.appT3)
+                                if s.calories > 0 {
+                                    Text("· ~\(s.calories) kcal")
+                                        .font(.system(size: 11))
+                                        .foregroundStyle(Color.appT4)
+                                }
                             }
                         }
                     }
+                    Spacer()
+                    Text(statusLabel)
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundStyle(accent)
+                        .padding(.horizontal, 8).padding(.vertical, 3)
+                        .background(accent.opacity(0.14), in: Capsule())
+                } else {
+                    Text("No session")
+                        .font(.system(size: 13))
+                        .foregroundStyle(Color.appT4)
+                    Spacer()
                 }
-                Spacer()
-                Text(statusLabel)
-                    .font(.system(size: 10, weight: .bold))
-                    .foregroundStyle(accent)
-                    .padding(.horizontal, 8).padding(.vertical, 3)
-                    .background(accent.opacity(0.14), in: Capsule())
-            } else {
-                Text("No session")
-                    .font(.system(size: 13))
-                    .foregroundStyle(Color.appT4)
-                Spacer()
             }
+            .padding(14)
+            .background(isSelected ? Color.appBG3 : Color.appBG2,
+                        in: RoundedRectangle(cornerRadius: 14))
+            .overlay(
+                RoundedRectangle(cornerRadius: 14)
+                    .stroke(isSelected ? Color.appCyan.opacity(0.3) : Color.appHair, lineWidth: 1)
+            )
         }
-        .padding(14)
-        .background(isSelected ? Color.appBG3 : Color.appBG2,
-                    in: RoundedRectangle(cornerRadius: 14))
-        .overlay(
-            RoundedRectangle(cornerRadius: 14)
-                .stroke(isSelected ? Color.appCyan.opacity(0.3) : Color.appHair, lineWidth: 1)
-        )
+        .buttonStyle(.plain)
+        .sheet(isPresented: $showDetail) {          // ← NEW sheet
+            DayDetailSheet(date: date, session: session)
+        }
     }
 }
