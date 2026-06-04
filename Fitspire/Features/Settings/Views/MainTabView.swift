@@ -4,25 +4,24 @@
 //
 //  Created by Navyashree Byregowda on 06/05/2026.
 //
-
-//  MainTabView.swift — FitnessAI
+// MainTabView.swift — FitnessAI
 import SwiftUI
 
 struct MainTabView: View {
     var body: some View {
         TabView {
+            GoalDashboardView()
+                .tabItem { Label("Dashboard", systemImage: "square.grid.2x2.fill") }
             WorkoutDashboardView()
-                .tabItem { Label("Home",      systemImage: "house.fill") }
-            WorkoutPlanView()
-                .tabItem { Label("Train",     systemImage: "dumbbell.fill") }
+                .tabItem { Label("Workout", systemImage: "dumbbell.fill") }
             NutritionView()
                 .tabItem { Label("Nutrition", systemImage: "fork.knife") }
             ProgressView()
-                .tabItem { Label("Progress",  systemImage: "chart.line.uptrend.xyaxis") }
+                .tabItem { Label("Progress", systemImage: "chart.line.uptrend.xyaxis") }
             SettingsView()
-                .tabItem { Label("You",       systemImage: "person.fill") }
+                .tabItem { Label("You", systemImage: "person.fill") }
         }
-        .tint(.appLime)
+        .tint(.appCyan)
         .preferredColorScheme(.dark)
         .onAppear {
             let bar = UITabBarAppearance()
