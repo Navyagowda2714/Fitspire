@@ -20,8 +20,8 @@ import Combine
 // The conforming LivePoseViewModel extension explicitly marks the method `nonisolated`.
 @preconcurrency
 protocol CameraManagerDelegate: AnyObject, Sendable {
-    func cameraManager(_ manager: CameraManager,
-                       didOutput sampleBuffer: CMSampleBuffer)
+    nonisolated func cameraManager(_ manager: CameraManager,
+                       didOutput pixelBuffer: CVPixelBuffer)
 }
 
 final class CameraManager: NSObject, ObservableObject {
@@ -159,6 +159,7 @@ final class CameraManager: NSObject, ObservableObject {
     }
 }
 
+/*
 extension CameraManager: AVCaptureVideoDataOutputSampleBufferDelegate {
     nonisolated func captureOutput(
         _ output: AVCaptureOutput,
@@ -168,5 +169,16 @@ extension CameraManager: AVCaptureVideoDataOutputSampleBufferDelegate {
         // Capture delegate reference immediately to avoid data race on optional access
         let d = delegate
         d?.cameraManager(self, didOutput: sampleBuffer)
+    }
+}
+*/
+extension CameraManager: AVCaptureVideoDataOutputSampleBufferDelegate {
+    nonisolated func captureOutput(
+        _ output: AVCaptureOutput,
+        didOutput sampleBuffer: CMSampleBuffer,
+        from connection: AVCaptureConnection
+    ) {
+        guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
+        delegate?.cameraManager(self, didOutput: pixelBuffer)
     }
 }

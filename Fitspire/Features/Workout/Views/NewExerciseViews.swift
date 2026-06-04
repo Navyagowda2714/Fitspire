@@ -10,208 +10,27 @@ import AVFoundation
 import Vision
 import Combine
 
+// MARK: - Angle Card
+struct AngleCard: View {
+    let title: String
+    let angle: Double
+    let isOk: Bool
+    let idealRange: String
+    var body: some View {
+        VStack(spacing: 5) {
+            Text(title).font(.caption).foregroundColor(.white.opacity(0.7))
+            Text("\(Int(angle))°").font(.headline.bold()).foregroundColor(isOk ? .green : .red)
+            Text(idealRange).font(.caption2).foregroundColor(.white.opacity(0.5))
+        }
+        .frame(maxWidth: .infinity).padding(.vertical, 10)
+        .background(isOk ? Color.green.opacity(0.15) : Color.red.opacity(0.15)).cornerRadius(12)
+    }
+}
 // ─────────────────────────────────────────────────────────────────────────────
 // MARK: - GLUTE BRIDGE V2
 // Side-on camera. Tracks hip extension, knee angle, spine.
 // ─────────────────────────────────────────────────────────────────────────────
 
-enum GluteBridgeIssueV2: String {
-    case correct    = "✅ Perfect Bridge — Hold!"
-    case notHigh    = "❌ Drive Hips Higher"
-    case hipDrop    = "❌ Keep Hips Level"
-    case detecting  = "🔍 Detecting..."
-    case notVisible = "📷 Full Body Not Visible"
-}
-
-struct GluteBridgeResultV2 {
-    var issue: GluteBridgeIssueV2 = .detecting
-    var postureScore: Int = 100
-    var hipAngle: Double = 180
-    var kneeAngle: Double = 90
-    var hipHeight: Double = 0
-    var trackedLeftSide = true
-    var hipOk = true
-    var kneeOk = true
-}
-
-final class GluteBridgeViewModelV2: NSObject, ObservableObject, AVCaptureVideoDataOutputSampleBufferDelegate {
-    let session = AVCaptureSession()
-    private let sessionQueue = DispatchQueue(label: "fitspire.glutebridge.session", qos: .userInitiated)
-
-    @Published var bodyPoints: [VNHumanBodyPoseObservation.JointName: CGPoint] = [:]
-    @Published var result = GluteBridgeResultV2()
-    @Published var reps = 0
-    @Published var phaseText = "Down"
-    @Published var phaseColor: Color = .white
-    @Published var showAlert = false
-    @Published var alertMessage = ""
-    @Published var cameraPosition: AVCaptureDevice.Position = .back
-
-    private var currentPhase = "down"
-    private var frameBuffer: [GluteBridgeResultV2] = []
-    private var lastHip: Double = 180
-    private var topReached = false
-    private var repStarted = false
-    private var validTopFrames = 0
-    private var validDownFrames = 0
-    private var alertTimer: Timer?
-
-    func start() {
-        AVCaptureDevice.requestAccess(for: .video) { [weak self] granted in
-            guard granted else { return }
-            self?.sessionQueue.async { self?.setup() }
-        }
-    }
-    func stop() { sessionQueue.async { [weak self] in self?.session.stopRunning() } }
-    func resetReps() {
-        DispatchQueue.main.async {
-            self.reps = 0; self.topReached = false; self.repStarted = false
-            self.validTopFrames = 0; self.validDownFrames = 0
-        }
-    }
-    func switchCamera() {
-        sessionQueue.async {
-            let pos: AVCaptureDevice.Position = self.cameraPosition == .front ? .back : .front
-            self.session.beginConfiguration()
-            if let old = self.session.inputs.first { self.session.removeInput(old) }
-            guard let dev = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: pos),
-                  let inp = try? AVCaptureDeviceInput(device: dev), self.session.canAddInput(inp)
-            else { self.session.commitConfiguration(); return }
-            self.session.addInput(inp); self.session.commitConfiguration()
-            self.session.startRunning()
-            DispatchQueue.main.async { self.cameraPosition = pos }
-        }
-    }
-    private func setup() {
-        session.stopRunning()
-        session.beginConfiguration()
-        session.inputs.forEach { session.removeInput($0) }
-        session.outputs.forEach { session.removeOutput($0) }
-        session.sessionPreset = .high
-        guard let dev = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: cameraPosition),
-              let inp = try? AVCaptureDeviceInput(device: dev), session.canAddInput(inp) else { return }
-        session.addInput(inp)
-        let out = AVCaptureVideoDataOutput()
-        out.setSampleBufferDelegate(self, queue: DispatchQueue(label: "gbV2Q"))
-        out.alwaysDiscardsLateVideoFrames = true
-        if session.canAddOutput(out) { session.addOutput(out) }
-        session.commitConfiguration()
-        session.startRunning()
-    }
-    func captureOutput(_ output: AVCaptureOutput, didOutput sb: CMSampleBuffer, from conn: AVCaptureConnection) {
-        guard let px = CMSampleBufferGetImageBuffer(sb) else { return }
-        let orient: CGImagePropertyOrientation = cameraPosition == .front ? .leftMirrored : .right
-        let req = VNDetectHumanBodyPoseRequest()
-        try? VNImageRequestHandler(cvPixelBuffer: px, orientation: orient).perform([req])
-        guard let obs = req.results?.first, let pts = try? obs.recognizedPoints(.all) else { return }
-        updatePoints(pts)
-        var raw = analyze(pts)
-        if raw.issue == .notVisible { DispatchQueue.main.async { self.result = raw }; return }
-        frameBuffer.append(raw)
-        if frameBuffer.count > 8 { frameBuffer.removeFirst() }
-        let n = Double(frameBuffer.count)
-        raw.hipAngle = frameBuffer.map { $0.hipAngle }.reduce(0,+) / n
-        raw.kneeAngle = frameBuffer.map { $0.kneeAngle }.reduce(0,+) / n
-        raw.postureScore = Int(Double(frameBuffer.map { $0.postureScore }.reduce(0,+)) / n)
-        updatePhase(raw)
-        DispatchQueue.main.async { self.result = raw }
-    }
-    private func analyze(_ pts: [VNHumanBodyPoseObservation.JointName: VNRecognizedPoint]) -> GluteBridgeResultV2 {
-        var r = GluteBridgeResultV2()
-        let lC: Float = (pts[.leftHip]?.confidence ?? 0) + (pts[.leftKnee]?.confidence ?? 0)
-        let rC: Float = (pts[.rightHip]?.confidence ?? 0) + (pts[.rightKnee]?.confidence ?? 0)
-        let ul = lC >= rC; r.trackedLeftSide = ul
-        let shK: VNHumanBodyPoseObservation.JointName = ul ? .leftShoulder : .rightShoulder
-        let hpK: VNHumanBodyPoseObservation.JointName = ul ? .leftHip : .rightHip
-        let knK: VNHumanBodyPoseObservation.JointName = ul ? .leftKnee : .rightKnee
-        let anK: VNHumanBodyPoseObservation.JointName = ul ? .leftAnkle : .rightAnkle
-        guard let hp = pts[hpK], hp.confidence > 0.4,
-              let kn = pts[knK], kn.confidence > 0.4,
-              let an = pts[anK], an.confidence > 0.4 else { r.issue = .notVisible; return r }
-        r.kneeAngle = vAngle(hp.location, kn.location, an.location)
-        r.kneeOk = r.kneeAngle >= 70 && r.kneeAngle <= 120
-        r.hipHeight = hp.location.y
-        if let sh = pts[shK], sh.confidence > 0.3 {
-            r.hipAngle = vAngle(sh.location, hp.location, kn.location)
-            r.hipOk = r.hipAngle <= 155
-        } else { r.hipOk = true }
-        var score = 100
-        if !r.hipOk { score -= 40 }
-        if !r.kneeOk { score -= 20 }
-        r.postureScore = max(score, 0)
-        r.issue = !r.hipOk ? .notHigh : .correct
-        return r
-    }
-    private func updatePhase(_ r: GluteBridgeResultV2) {
-        if r.hipAngle < 165 && r.hipAngle < lastHip { repStarted = true }
-        if repStarted && r.hipAngle <= 155 {
-            validTopFrames += 1
-            if validTopFrames >= 3 { topReached = true }
-        } else { validTopFrames = 0 }
-        if topReached && r.hipAngle >= 168 {
-            validDownFrames += 1
-            if validDownFrames >= 2 {
-                DispatchQueue.main.async { self.reps += 1 }
-                topReached = false; repStarted = false; validTopFrames = 0; validDownFrames = 0
-            }
-        } else { validDownFrames = 0 }
-        lastHip = r.hipAngle
-        let ph = r.hipAngle <= 155 ? "Top ✅" : r.hipAngle < 165 ? "Raising" : "Down"
-        let pc: Color = r.hipAngle <= 155 ? .green : r.hipAngle < 165 ? .yellow : .white
-        DispatchQueue.main.async { self.phaseText = ph; self.phaseColor = pc }
-        if !r.hipOk {
-            DispatchQueue.main.async {
-                self.alertMessage = "Drive Hips Higher — Squeeze Your Glutes!"
-                self.showAlert = true
-                self.alertTimer?.invalidate()
-                self.alertTimer = Timer.scheduledTimer(withTimeInterval: 2, repeats: false) { _ in
-                    DispatchQueue.main.async { self.showAlert = false }
-                }
-            }
-        } else { DispatchQueue.main.async { self.showAlert = false } }
-    }
-    private func updatePoints(_ pts: [VNHumanBodyPoseObservation.JointName: VNRecognizedPoint]) {
-        var m: [VNHumanBodyPoseObservation.JointName: CGPoint] = [:]
-        for (j, p) in pts where p.confidence > 0.3 { m[j] = CGPoint(x: p.location.x, y: 1 - p.location.y) }
-        DispatchQueue.main.async { self.bodyPoints = m }
-    }
-    private func vAngle(_ a: CGPoint, _ b: CGPoint, _ c: CGPoint) -> Double {
-        let ab = atan2(a.y-b.y, a.x-b.x); let cb = atan2(c.y-b.y, c.x-b.x)
-        var ang = abs((ab-cb) * 180.0 / Double.pi); if ang > 180 { ang = 360-ang }; return ang
-    }
-}
-
-struct GluteBridgeCameraViewV2: View {
-    @StateObject private var vm = GluteBridgeViewModelV2()
-    @Environment(\.dismiss) var dismiss
-    var body: some View {
-        ZStack {
-            ExerciseSessionPreview(session: vm.session).ignoresSafeArea()
-            SimpleSkeletonOverlay(bodyPoints: vm.bodyPoints, isGood: vm.result.hipOk).ignoresSafeArea()
-            VStack {
-                topBar(title: "Glute Bridge AI", subtitle: "Drive Those Hips!")
-                Spacer()
-                if vm.showAlert { FormAlertBannerV2(message: vm.alertMessage) }
-                Spacer()
-                bottomPanel(
-                    issue: vm.result.issue.rawValue,
-                    cards: [
-                        ("Hip Ext.", vm.result.hipAngle, vm.result.hipOk, "< 155°"),
-                        ("Knee", vm.result.kneeAngle, vm.result.kneeOk, "70°-120°"),
-                        ("Score", Double(vm.result.postureScore), vm.result.postureScore >= 70, "> 70")
-                    ],
-                    reps: vm.reps, phase: vm.phaseText, phaseColor: vm.phaseColor,
-                    score: vm.result.postureScore,
-                    onReset: { vm.resetReps() },
-                    onFlip: { vm.switchCamera() }
-                )
-            }
-        }
-        .onAppear { vm.start() }
-        .onDisappear { vm.stop() }
-        .navigationBarHidden(true)
-    }
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MARK: - MOUNTAIN CLIMBER
@@ -349,7 +168,7 @@ struct MountainClimberCameraViewV2: View {
     var body: some View {
         ZStack {
             ExerciseSessionPreview(session: vm.session).ignoresSafeArea()
-            SimpleSkeletonOverlay(bodyPoints: vm.bodyPoints, isGood: vm.result.bodyOk).ignoresSafeArea()
+            SimpleSkeletonOverlay(bodyPoints: vm.bodyPoints, isOk: vm.result.bodyOk).ignoresSafeArea()
             VStack {
                 topBar(title: "Mountain Climber AI", subtitle: "Drive Knees In!")
                 Spacer()
@@ -511,7 +330,7 @@ struct BurpeeCameraViewV2: View {
     var body: some View {
         ZStack {
             ExerciseSessionPreview(session: vm.session).ignoresSafeArea()
-            SimpleSkeletonOverlay(bodyPoints: vm.bodyPoints, isGood: vm.result.bodyOk).ignoresSafeArea()
+            SimpleSkeletonOverlay(bodyPoints: vm.bodyPoints, isOk: vm.result.bodyOk).ignoresSafeArea()
             VStack {
                 topBar(title: "Burpee AI", subtitle: "Plank → Squat → Jump!")
                 Spacer()
@@ -670,7 +489,7 @@ struct TricepDipCameraView: View {
     var body: some View {
         ZStack {
             ExerciseSessionPreview(session: vm.session).ignoresSafeArea()
-            SimpleSkeletonOverlay(bodyPoints: vm.bodyPoints, isGood: vm.result.elbowOk).ignoresSafeArea()
+            SimpleSkeletonOverlay(bodyPoints: vm.bodyPoints, isOk: vm.result.elbowOk).ignoresSafeArea()
             VStack {
                 topBar(title: "Tricep Dip AI", subtitle: "Elbows to 90° — Drive Up!")
                 Spacer()
@@ -819,7 +638,7 @@ struct HighKneesCameraViewV2: View {
     var body: some View {
         ZStack {
             ExerciseSessionPreview(session: vm.session).ignoresSafeArea()
-            SimpleSkeletonOverlay(bodyPoints: vm.bodyPoints, isGood: vm.result.kneeOk).ignoresSafeArea()
+            SimpleSkeletonOverlay(bodyPoints: vm.bodyPoints, isOk: vm.result.kneeOk).ignoresSafeArea()
             VStack {
                 topBar(title: "High Knees AI", subtitle: "Drive Knees to Hip Height!")
                 Spacer()
@@ -979,7 +798,7 @@ struct SupermanCameraView: View {
     var body: some View {
         ZStack {
             ExerciseSessionPreview(session: vm.session).ignoresSafeArea()
-            SimpleSkeletonOverlay(bodyPoints: vm.bodyPoints, isGood: vm.result.liftOk).ignoresSafeArea()
+            SimpleSkeletonOverlay(bodyPoints: vm.bodyPoints, isOk: vm.result.liftOk).ignoresSafeArea()
             VStack {
                 topBar(title: "Superman AI", subtitle: "Lie flat · Side-on camera")
                 Spacer()
@@ -1032,7 +851,18 @@ struct SupermanCameraView: View {
 // Simple two-colour skeleton — green when good, red when bad
 struct SimpleSkeletonOverlay: View {
     let bodyPoints: [VNHumanBodyPoseObservation.JointName: CGPoint]
-    let isGood: Bool
+    let joints: [VNHumanBodyPoseObservation.JointName]?   // nil = show all
+    let isOk: Bool                                          // renamed from isGood
+
+    init(
+        bodyPoints: [VNHumanBodyPoseObservation.JointName: CGPoint],
+        joints: [VNHumanBodyPoseObservation.JointName]? = nil,
+        isOk: Bool
+    ) {
+        self.bodyPoints = bodyPoints
+        self.joints = joints
+        self.isOk = isOk
+    }
 
     private let bones: [(VNHumanBodyPoseObservation.JointName, VNHumanBodyPoseObservation.JointName)] = [
         (.leftShoulder, .rightShoulder),
@@ -1044,26 +874,40 @@ struct SimpleSkeletonOverlay: View {
         (.rightHip, .rightKnee), (.rightKnee, .rightAnkle),
     ]
 
+    /// Returns only the bones where both endpoints are in the joints filter (if set)
+    private var visibleBones: [(VNHumanBodyPoseObservation.JointName, VNHumanBodyPoseObservation.JointName)] {
+        guard let joints else { return bones }
+        let set = Set(joints)
+        return bones.filter { set.contains($0.0) && set.contains($0.1) }
+    }
+
+    /// Returns only the points that are in the joints filter (if set)
+    private var visiblePoints: [VNHumanBodyPoseObservation.JointName: CGPoint] {
+        guard let joints else { return bodyPoints }
+        let set = Set(joints)
+        return bodyPoints.filter { set.contains($0.key) }
+    }
+
     var body: some View {
         GeometryReader { geo in
             ZStack {
-                ForEach(Array(bones.enumerated()), id: \.offset) { _, bone in
+                ForEach(Array(visibleBones.enumerated()), id: \.offset) { _, bone in
                     if let p1 = bodyPoints[bone.0], let p2 = bodyPoints[bone.1] {
                         Path { path in
-                            path.move(to: CGPoint(x: p1.x*geo.size.width, y: p1.y*geo.size.height))
-                            path.addLine(to: CGPoint(x: p2.x*geo.size.width, y: p2.y*geo.size.height))
+                            path.move(to: CGPoint(x: p1.x * geo.size.width,  y: p1.y * geo.size.height))
+                            path.addLine(to: CGPoint(x: p2.x * geo.size.width, y: p2.y * geo.size.height))
                         }
-                        .stroke(isGood ? Color.green : Color.red,
+                        .stroke(isOk ? Color.green : Color.red,
                                 style: StrokeStyle(lineWidth: 4, lineCap: .round))
                     }
                 }
-                ForEach(Array(bodyPoints.keys), id: \.self) { joint in
-                    if let pt = bodyPoints[joint] {
+                ForEach(Array(visiblePoints.keys), id: \.self) { joint in
+                    if let pt = visiblePoints[joint] {
                         Circle()
-                            .fill(isGood ? Color.green : Color.red)
+                            .fill(isOk ? Color.green : Color.red)
                             .frame(width: 12, height: 12)
                             .overlay(Circle().stroke(Color.white.opacity(0.5), lineWidth: 1.5))
-                            .position(x: pt.x*geo.size.width, y: pt.y*geo.size.height)
+                            .position(x: pt.x * geo.size.width, y: pt.y * geo.size.height)
                     }
                 }
             }

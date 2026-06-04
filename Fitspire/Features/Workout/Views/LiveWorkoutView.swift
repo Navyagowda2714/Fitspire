@@ -4,7 +4,7 @@
 //
 //  Created by Navyashree Byregowda on 01/05/2026.
 //
-
+/*
 import SwiftUI
 
 struct LiveWorkoutView: View {
@@ -16,7 +16,7 @@ struct LiveWorkoutView: View {
         GeometryReader { geo in
             ZStack {
                 // 1. Camera feed
-                CameraPreviewLayer(session: vm.session)
+                CameraPreview(session: vm.session)
                     .ignoresSafeArea()
 
                 // 2. Skeleton overlay
@@ -97,3 +97,4 @@ struct LiveWorkoutView: View {
         .padding(.vertical, 12)
     }
 }
+*/

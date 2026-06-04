@@ -74,9 +74,8 @@ final class BodyScanViewModel: NSObject, ObservableObject {
 extension BodyScanViewModel: CameraManagerDelegate {
     nonisolated func cameraManager(
         _ manager: CameraManager,
-        didOutput sampleBuffer: CMSampleBuffer
+        didOutput pixelBuffer: CVPixelBuffer
     ) {
-        guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
         let request = VNDetectHumanBodyPoseRequest()
         try? VNImageRequestHandler(cvPixelBuffer: pixelBuffer, options: [:]).perform([request])
 

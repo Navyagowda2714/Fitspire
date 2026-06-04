@@ -1,152 +1,103 @@
 //
 //  WatchConnectivityManager.swift
-//  FitnessAI
+//  PostureCorrect (iOS target)
 //
-//  Created by Navyashree Byregowda on 03/05/2026.
-//
-
 
 import Foundation
 import WatchConnectivity
 import Combine
 
-@MainActor
-final class WatchConnectivityManager: NSObject, ObservableObject {
+final class WatchConnectivityManager: NSObject, WCSessionDelegate, ObservableObject {
+
     static let shared = WatchConnectivityManager()
 
-    @Published var isWatchReachable: Bool = false
-    @Published var lastSentAlert: WatchAlertPayload?
+    @Published var isWatchReachable = false
 
     private override init() {
         super.init()
-        setupSession()
-    }
-
-    private func setupSession() {
-        guard WCSession.isSupported() else { return }
+        guard WCSession.isSupported() else {
+            print("❌ WCSession NOT supported on this device")
+            return
+        }
+        print("✅ WCSession is supported — activating...")
         WCSession.default.delegate = self
         WCSession.default.activate()
     }
 
-    var isWatchConnected: Bool {
-        guard WCSession.isSupported() else { return false }
-        return WCSession.default.isReachable
-    }
+    func sendFormAlert(exercise: String, issue: String) {
+        let state = WCSession.default.activationState
 
-    func sendAlert(_ payload: WatchAlertPayload) {
-        guard WCSession.isSupported(),
-              WCSession.default.activationState == .activated else { return }
+        print("📡 sendFormAlert called — exercise: \(exercise), issue: \(issue)")
+        print("   activationState: \(state.rawValue) (2=activated)")
+        print("   isReachable: \(WCSession.default.isReachable)")
+        print("   isPaired: \(WCSession.default.isPaired)")
+        print("   isWatchAppInstalled: \(WCSession.default.isWatchAppInstalled)")
+
+        guard state == .activated else {
+            print("❌ Session not activated — cannot send")
+            return
+        }
+
+        guard WCSession.default.isPaired else {
+            print("❌ No watch paired")
+            return
+        }
+
+        guard WCSession.default.isWatchAppInstalled else {
+            print("❌ Watch app not installed")
+            return
+        }
 
         let message: [String: Any] = [
-            "title":     payload.title,
-            "message":   payload.message,
-            "severity":  payload.severity,
-            "timestamp": payload.timestamp.timeIntervalSince1970
+            "exercise":  exercise,
+            "issue":     issue,
+            "timestamp": Date().timeIntervalSince1970
         ]
 
         if WCSession.default.isReachable {
-            WCSession.default.sendMessage(
-                message,
-                replyHandler: nil
-            ) { error in
-                print("Watch error: \(error.localizedDescription)")
+            print("✅ Watch is reachable — sending via sendMessage")
+            WCSession.default.sendMessage(message, replyHandler: nil) { error in
+                print("❌ sendMessage error: \(error.localizedDescription)")
+                print("   Falling back to transferUserInfo...")
+                WCSession.default.transferUserInfo(message)
             }
         } else {
-            try? WCSession.default.updateApplicationContext(message)
-        }
-
-        lastSentAlert = payload
-    }
-
-    func sendWorkoutStatus(
-        exercise: String,
-        formScore: Int,
-        isActive: Bool
-    ) {
-        guard WCSession.isSupported(),
-              WCSession.default.activationState == .activated else { return }
-
-        let context: [String: Any] = [
-            "exercise":  exercise,
-            "formScore": formScore,
-            "isActive":  isActive
-        ]
-        try? WCSession.default.updateApplicationContext(context)
-    }
-}
-
-extension WatchConnectivityManager: WCSessionDelegate {
-    nonisolated func session(
-        _ session: WCSession,
-        activationDidCompleteWith activationState: WCSessionActivationState,
-        error: Error?
-    ) {
-        Task { @MainActor [weak self] in
-            self?.isWatchReachable = session.isReachable
+            print("⚠️ Watch not reachable — sending via transferUserInfo")
+            WCSession.default.transferUserInfo(message)
         }
     }
 
-    nonisolated func sessionDidBecomeInactive(_ session: WCSession) {}
+    // MARK: - WCSessionDelegate
+    func session(_ session: WCSession,
+                 activationDidCompleteWith state: WCSessionActivationState,
+                 error: Error?) {
+        DispatchQueue.main.async {
+            self.isWatchReachable = session.isReachable
+        }
+        if let error = error {
+            print("❌ WCSession activation error: \(error.localizedDescription)")
+        } else {
+            print("✅ WCSession activated successfully")
+            print("   isPaired: \(session.isPaired)")
+            print("   isWatchAppInstalled: \(session.isWatchAppInstalled)")
+            print("   isReachable: \(session.isReachable)")
+        }
+    }
 
-    nonisolated func sessionDidDeactivate(_ session: WCSession) {
+    func sessionReachabilityDidChange(_ session: WCSession) {
+        DispatchQueue.main.async {
+            self.isWatchReachable = session.isReachable
+        }
+        print("📡 Reachability changed: \(session.isReachable)")
+    }
+
+    func sessionDidBecomeInactive(_ session: WCSession) {
+        print("⚠️ WCSession became inactive")
+    }
+
+    func sessionDidDeactivate(_ session: WCSession) {
+        print("⚠️ WCSession deactivated — reactivating...")
         WCSession.default.activate()
-    }
-
-    nonisolated func sessionReachabilityDidChange(_ session: WCSession) {
-        Task { @MainActor [weak self] in
-            self?.isWatchReachable = session.isReachable
-        }
-    }
-}
-struct WatchRepUpdate: Codable {
-    var repCount: Int
-    var formScore: Int
-    var feedback: String
-}
-
-// Add to WatchConnectivityManager
-func sendRepUpdate(_ update: WatchRepUpdate) {
-    guard WCSession.default.activationState == .activated,
-          WCSession.default.isReachable else { return }
-    let data = (try? JSONEncoder().encode(update)) ?? Data()
-    WCSession.default.sendMessage(["repUpdate": data], replyHandler: nil)
-}
-
-func sendPostureAlert(_ message: String) {
-    guard WCSession.default.activationState == .activated else { return }
-    WCSession.default.sendMessage(["postureAlert": message], replyHandler: nil)
-}
-
-
-// MARK: - Rep counter + posture alert helpers
-extension WatchConnectivityManager {
-    func sendRepUpdate(_ update: WatchRepUpdate) {
-        guard WCSession.default.activationState == .activated,
-              WCSession.default.isReachable else { return }
-        let data = (try? JSONEncoder().encode(update)) ?? Data()
-        WCSession.default.sendMessage(["repUpdate": data], replyHandler: nil)
-    }
-
-    func sendPostureAlert(_ message: String) {
-        guard WCSession.default.activationState == .activated else { return }
-        let msg: [String: Any] = ["postureAlert": message]
-        if WCSession.default.isReachable {
-            WCSession.default.sendMessage(msg, replyHandler: nil)
-        } else {
-            WCSession.default.transferUserInfo(msg)
-        }
-    }
-}
-
-extension WatchConnectivityManager {
-    func sendFormAlert(exercise: String, issue: String) {
-        guard WCSession.default.activationState == .activated else { return }
-        let msg: [String: Any] = ["exercise": exercise, "issue": issue]
-        if WCSession.default.isReachable {
-            WCSession.default.sendMessage(msg, replyHandler: nil)
-        } else {
-            WCSession.default.transferUserInfo(msg)
-        }
     }
 }
 

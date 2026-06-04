@@ -17,7 +17,7 @@ struct BodyScanView: View {
     var body: some View {
         ZStack {
             // Camera feed
-            CameraPreviewView(session: viewModel.cameraManager.session)
+            CameraPreview(session: viewModel.cameraManager.session)
                 .ignoresSafeArea()
 
             // Skeleton overlay
