@@ -12,7 +12,7 @@ import SwiftUI
 import HealthKit
 import Charts
 
-struct ProgressView: View {
+struct FitProgressView: View {
     // ── HealthKit (unchanged) ──────────────────────────────────────────────
     @StateObject private var healthKit = HealthKitManager.shared
     @State private var hasRequestedPermission = false
