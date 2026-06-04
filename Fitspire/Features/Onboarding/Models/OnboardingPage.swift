@@ -20,14 +20,14 @@ extension OnboardingPage {
     static let all: [OnboardingPage] = [
         OnboardingPage(
             systemImage: "figure.strengthtraining.traditional",
-            title: "Welcome to FitnessAI",
+            title: "Welcome to FitSpire",
             description: "Your personal AI fitness coach that adapts to your body, goals, and progress.",
             bullets: ["Personalised workout plans", "Real-time form coaching", "Goal-based nutrition plans"]
         ),
         OnboardingPage(
             systemImage: "camera.viewfinder",
             title: "Real-time form coaching",
-            description: "FitnessAI uses your camera to detect body pose and give instant feedback.",
+            description: "Fitspire uses your camera to detect body pose and give instant feedback.",
             bullets: ["Detects 19 body landmarks", "Calculates joint angles live", "Camera stays on-device only"]
         ),
         OnboardingPage(
@@ -39,7 +39,7 @@ extension OnboardingPage {
         OnboardingPage(
             systemImage: "heart.text.square",
             title: "HealthKit integration",
-            description: "FitnessAI reads and writes to Apple Health to track your fitness journey.",
+            description: "Fitspire reads and writes to Apple Health to track your fitness journey.",
             bullets: ["Saves workout sessions", "Tracks calories and heart rate", "You control what is shared"]
         ),
         OnboardingPage(

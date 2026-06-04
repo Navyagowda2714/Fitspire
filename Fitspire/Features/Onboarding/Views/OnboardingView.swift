@@ -169,7 +169,7 @@ struct SplashPageView: View {
             // Title
             VStack(spacing: 8) {
                 HStack(spacing: 0) {
-                    Text("FitnessAI ")
+                    Text("Fitspire ")
                         .font(.system(size: 36, weight: .bold))
                         .foregroundStyle(.white)
                     Text("Coach")

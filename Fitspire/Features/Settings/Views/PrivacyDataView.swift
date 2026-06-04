@@ -85,7 +85,7 @@ struct PrivacyDataView: View {
                     DataRow(
                         icon: "xmark.shield.fill",
                         label: "No ads",
-                        detail: "FitnessAI never shows advertisements"
+                        detail: "Fitspire never shows advertisements"
                     )
                     DataRow(
                         icon: "hand.raised.fill",

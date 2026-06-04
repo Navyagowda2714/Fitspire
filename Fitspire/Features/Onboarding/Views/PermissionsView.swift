@@ -25,7 +25,7 @@ struct PermissionsView: View {
             VStack(alignment: .leading, spacing: 6) {
                 Text("Allow access")
                     .font(.system(size: 28, weight: .medium))
-                Text("FitnessAI needs these to work.\nYou can change them in Settings anytime.")
+                Text("Fitspire needs these to work.\nYou can change them in Settings anytime.")
                     .font(.system(size: 14))
                     .foregroundStyle(Color.appT3)
             }

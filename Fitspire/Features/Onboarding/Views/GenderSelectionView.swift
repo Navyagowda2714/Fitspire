@@ -64,7 +64,7 @@ struct GenderSelectionView: View {
                             .foregroundColor(.white.opacity(0.5))
 
                         HStack(spacing: 6) {
-                            Text("FitnessAI")
+                            Text("Fitspire")
                                 .font(.system(size: 32, weight: .bold))
                                 .foregroundColor(.white)
                             Text("Coach")

@@ -97,7 +97,7 @@ struct SplashView: View {
 
                 // App name
                 VStack(spacing: 8) {
-                    Text("FitnessAI")
+                    Text("Fitspire")
                         .font(.system(size: 38, weight: .heavy, design: .default))
                         .foregroundStyle(
                             LinearGradient(

@@ -209,7 +209,7 @@ struct IntroPage {
     static let all: [IntroPage] = [
         IntroPage(
             icon: "bolt.fill",
-            title: "Welcome to FitnessAI",
+            title: "Welcome to Fitspire",
             subtitle: "Your intelligent personal trainer that watches your form, builds your plan, and keeps you on track — right from your phone.",
             bullets: [
                 "100% personalised to your goals and body",
@@ -221,7 +221,7 @@ struct IntroPage {
         IntroPage(
             icon: "camera.viewfinder",
             title: "AI Form Correction",
-            subtitle: "Your phone camera becomes a personal coach. FitnessAI uses Vision AI to track your body in real time and catch mistakes before they cause injury.",
+            subtitle: "Your phone camera becomes a personal coach. Fitspire uses Vision AI to track your body in real time and catch mistakes before they cause injury.",
             bullets: [
                 "Skeleton overlay shows every joint position",
                 "Green = correct · Red = needs fixing",
@@ -232,7 +232,7 @@ struct IntroPage {
         IntroPage(
             icon: "chart.bar.fill",
             title: "Built Around You",
-            subtitle: "Answer a quick 9-step questionnaire and FitnessAI generates a fully personalised workout plan — matched to your fitness level, equipment, and schedule.",
+            subtitle: "Answer a quick 9-step questionnaire and Fitspire generates a fully personalised workout plan — matched to your fitness level, equipment, and schedule.",
             bullets: [
                 "Safety screening included (PAR-Q)",
                 "Adapts for injuries and health conditions",

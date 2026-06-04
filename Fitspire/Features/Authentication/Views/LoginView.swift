@@ -48,7 +48,7 @@ struct LoginView: View {
                 }.padding(.bottom, 24)
 
                 // FIX: iOS 26 Text interpolation instead of Text + Text
-                Text("FitnessAI \(Text("Coach").foregroundStyle(Color.appCyan))")
+                Text("Fitspire \(Text("Coach").foregroundStyle(Color.appCyan))")
                     .font(.system(size: 34, weight: .bold))
                     .foregroundStyle(.white)
                     .shadow(color: Color.appCyan.opacity(0.4), radius: 8)
@@ -70,11 +70,10 @@ struct LoginView: View {
                         HStack(spacing: 10) {
                             Image(systemName: "faceid").font(.system(size: 20))
                             Text("Continue with Face ID").font(.system(size: 16, weight: .medium))
-                            Spacer()
-                            Image(systemName: "arrow.right").font(.system(size: 14))
-                                .foregroundStyle(Color.appCyan)
                         }
-                        .foregroundStyle(.white).frame(maxWidth: .infinity).frame(height: 56).padding(.horizontal, 20)
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 56)
                         .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.appCyan, lineWidth: 1.5))
                     }
 

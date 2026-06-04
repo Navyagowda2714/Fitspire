@@ -58,7 +58,7 @@ struct AuthView: View {
 
                     // Title
                     HStack(spacing: 6) {
-                        Text("FitnessAI")
+                        Text("Fitspire")
                             .font(.system(size: 36, weight: .bold, design: .rounded))
                             .foregroundColor(.white)
                         Text("Coach")

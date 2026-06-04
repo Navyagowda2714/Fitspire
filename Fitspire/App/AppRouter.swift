@@ -6,6 +6,7 @@
 //
 
 
+
 import SwiftUI
 
 struct RootView: View {
@@ -14,23 +15,19 @@ struct RootView: View {
     var body: some View {
         Group {
             if !appState.hasSeenIntro {
-                // First launch: show intro slides
+                // Step 1 — animated intro slides (first launch only)
                 IntroView {
                     appState.markIntroSeen()
                 }
             } else if !appState.isAuthenticated {
+                // Step 2 — Sign in with Apple / Face ID
                 LoginView()
-            } else if !appState.hasCompletedOnboarding {
-                OnboardingView()
-            } else if !appState.hasCompletedProfile || !appState.hasCompletedGoal {
-                QuestionnaireView()
             } else {
+                // Step 3 — straight into the app, no questionnaire
                 MainTabView()
             }
         }
         .animation(.easeInOut(duration: 0.35), value: appState.hasSeenIntro)
         .animation(.easeInOut(duration: 0.35), value: appState.isAuthenticated)
-        .animation(.easeInOut(duration: 0.35), value: appState.hasCompletedOnboarding)
-        .animation(.easeInOut(duration: 0.35), value: appState.hasCompletedGoal)
     }
 }
