@@ -1,7 +1,7 @@
 {
   "images" : [
     {
-      "filename" : "Untitled design-6.png",
+      "filename" : "Fitspire.png",
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"
@@ -13,7 +13,7 @@
           "value" : "dark"
         }
       ],
-      "filename" : "Fitspire.png",
+      "filename" : "Fitspire 1.png",
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"
@@ -25,7 +25,7 @@
           "value" : "tinted"
         }
       ],
-      "filename" : "Fitspire 1.png",
+      "filename" : "Fitspire 2.png",
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"
