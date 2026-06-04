@@ -4262,7 +4262,7 @@ struct GluteBridgeCameraView: View {
             }
         }
         .onAppear    { viewModel.start() }
-        .onDisappear { viewModel.stop() }
+        .onDisappear { viewModel.stopAndSave() }
         .sheet(item: $activeSheet) { sheet in
             switch sheet {
             case .goal:  GluteBridgeGoalSetupSheet(viewModel: viewModel)
