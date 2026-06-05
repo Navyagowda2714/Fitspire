@@ -47,6 +47,13 @@
 			);
 			target = 5D50941C2FA13FF90027A8C7 /* Fitspyre */;
 		};
+		5D809F2A2FD324FE00A235D3 /* Exceptions for "FitspyreWatch Watch App" folder in "FitspyreWatch Watch App" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 5DBEA6B22FCD910E00F0C27F /* FitspyreWatch Watch App */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -60,6 +67,9 @@
 		};
 		5DBEA6B42FCD910E00F0C27F /* FitspyreWatch Watch App */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				5D809F2A2FD324FE00A235D3 /* Exceptions for "FitspyreWatch Watch App" folder in "FitspyreWatch Watch App" target */,
+			);
 			path = "FitspyreWatch Watch App";
 			sourceTree = "<group>";
 		};
