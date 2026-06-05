@@ -58,9 +58,9 @@
 			path = Fitspyre;
 			sourceTree = "<group>";
 		};
-		5DBEA6B42FCD910E00F0C27F /* FitspireWatch Watch App */ = {
+		5DBEA6B42FCD910E00F0C27F /* FitspyreWatch Watch App */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = "FitspireWatch Watch App";
+			path = "FitspyreWatch Watch App";
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -89,7 +89,7 @@
 				5D5094592FA153F40027A8C7 /* Fitspyre */,
 				5DEA7CD32FA7B50E00B20CCE /* Fitspyre.app */,
 				5DBEA6B32FCD910E00F0C27F /* FitspyreWatch Watch App.app */,
-				5DBEA6B42FCD910E00F0C27F /* FitspireWatch Watch App */,
+				5DBEA6B42FCD910E00F0C27F /* FitspyreWatch Watch App */,
 			);
 			sourceTree = "<group>";
 		};
@@ -133,7 +133,7 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				5DBEA6B42FCD910E00F0C27F /* FitspireWatch Watch App */,
+				5DBEA6B42FCD910E00F0C27F /* FitspyreWatch Watch App */,
 			);
 			name = "FitspyreWatch Watch App";
 			packageProductDependencies = (
@@ -355,7 +355,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_ENTITLEMENTS = Fitspire/Fitspire.entitlements;
+				CODE_SIGN_ENTITLEMENTS = Fitspyre/Fitspyre.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 5;
@@ -405,7 +405,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_ENTITLEMENTS = Fitspire/Fitspire.entitlements;
+				CODE_SIGN_ENTITLEMENTS = Fitspyre/Fitspyre.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 5;
