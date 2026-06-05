@@ -5,8 +5,16 @@
 	<key>com.apple.developer.healthkit</key>
 	<true/>
 	<key>com.apple.developer.icloud-services</key>
-	<string>CloudKit</string>
+	<array>
+		<string>CloudKit</string>
+	</array>
+	<key>com.apple.developer.icloud-container-environment</key>
+	<array>
+		<string>Production</string>
+	</array>
 	<key>com.apple.developer.applesignin</key>
-	<array/>
+	<array>
+		<string>Default</string>
+	</array>
 </dict>
 </plist>
