@@ -7,6 +7,13 @@
 If you have any questions about this Privacy Policy or need support, contact us at:
 
 - navyashreebyregowda@icloud.com
+- Sameerkazi4781@icloud.com
+- s.muneeb2k@icloud.com
+- zeinabmoradiii79@gmail.com
+- Salehniamarzieh@gmail.com
+- Fatemeh.moghooeinejad1@gmail.com
+- S.Shahbazi2001@gmail.com
+
 
 ## Overview
 
