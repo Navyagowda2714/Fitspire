@@ -4,16 +4,7 @@
 //
 //  Created by Navyashree Byregowda on 28/04/2026.
 //
-//
-//  FitNotificationManager.swift
-//  Fitspire — Target: Fitspire ONLY
-//
-//  Handles all local workout reminder notifications:
-//    • Daily workout reminder at user-chosen time
-//    • Pre-workout reminder 30 min before
-//    • Rest day recovery reminder
-//    • Streak motivational nudge if no workout logged by evening
-//
+
 
 import Foundation
 import UserNotifications
