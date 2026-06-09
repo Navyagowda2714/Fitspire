@@ -22,6 +22,11 @@ struct SettingsView: View {
     @StateObject private var viewModel = SettingsViewModel()
     @State private var showPrivacySheet = false
     @State private var showExportSheet  = false
+    @State private var showTermsSheet   = false
+
+    @AppStorage("fitspire_streak")        private var streak        = 0
+    @AppStorage("fitspire_xp")            private var xp            = 0
+    @AppStorage("fitspire_totalWorkouts") private var totalWorkouts = 0
 
     var body: some View {
         NavigationStack {
@@ -31,6 +36,8 @@ struct SettingsView: View {
                     // MARK: - Profile
                     Section {
                         profileRow
+                            .listRowBackground(Color.appBG2)
+                        statsBanner
                             .listRowBackground(Color.appBG2)
                     } header: { sectionHeader("Profile") }
 
@@ -66,6 +73,15 @@ struct SettingsView: View {
 
                     // MARK: - About
                     Section {
+                        Button { showTermsSheet = true } label: {
+                            SettingsRow(icon: "exclamationmark.shield.fill", iconColor: "FFB020",
+                                        title: "Terms & safety disclaimer",
+                                        subtitle: "Injury risk & medical notice",
+                                        showChevron: true)
+                        }
+                        .buttonStyle(.plain)
+                        .listRowBackground(Color.appBG2)
+
                         SettingsRow(icon: "info.circle.fill", iconColor: "888780",
                                     title: "Version", subtitle: "Fitspyre 1.0.0 (Build 1)")
                             .listRowBackground(Color.appBG2)
@@ -128,6 +144,11 @@ struct SettingsView: View {
                     Text("Your data has been exported successfully.")
                 }
                 .sheet(isPresented: $showPrivacySheet) { PrivacyDataView() }
+                .sheet(isPresented: $showTermsSheet) {
+                    NavigationStack {
+                        TermsAndConditionsView { showTermsSheet = false }
+                    }
+                }
                 .sheet(isPresented: $showExportSheet) {
                     if let url = viewModel.exportURL { ShareSheet(items: [url]) }
                 }
@@ -145,8 +166,37 @@ struct SettingsView: View {
             .tracking(0.8)
     }
 
-    private var profileRow: some View {
-        HStack(spacing: 14) {
+    private var statsBanner: some View {
+        HStack(spacing: 0) {
+            statCell(icon: "flame.fill",  value: "\(streak)",        label: "DAY STREAK", accent: Color(hex: "D85A30"))
+            Divider().frame(height: 34).overlay(Color.appHair)
+            statCell(icon: "bolt.fill",   value: "\(xp)",            label: "XP",         accent: Color.appCyan)
+            Divider().frame(height: 34).overlay(Color.appHair)
+            statCell(icon: "trophy.fill", value: "\(totalWorkouts)", label: "WORKOUTS",   accent: Color(hex: "1D9E75"))
+        }
+        .padding(.vertical, 6)
+    }
+
+    private func statCell(icon: String, value: String, label: String, accent: Color) -> some View {
+        VStack(spacing: 4) {
+            HStack(spacing: 5) {
+                Image(systemName: icon)
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundStyle(accent)
+                Text(value)
+                    .font(.system(size: 17, weight: .heavy, design: .rounded))
+                    .foregroundStyle(.white)
+                    .lineLimit(1).minimumScaleFactor(0.7)
+            }
+            Text(label)
+                .font(.system(size: 8.5, weight: .bold))
+                .foregroundStyle(Color.appT4)
+                .tracking(1)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private var profileRow: some View {        HStack(spacing: 14) {
             ZStack {
                 Circle()
                     .fill(Color.appLime.opacity(0.15))

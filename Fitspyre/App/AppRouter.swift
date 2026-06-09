@@ -19,15 +19,21 @@ struct RootView: View {
                 IntroView {
                     appState.markIntroSeen()
                 }
+            } else if !appState.hasAcceptedTerms {
+                // Step 2 — injury / medical disclaimer (must accept once)
+                TermsAndConditionsView {
+                    appState.markTermsAccepted()
+                }
             } else if !appState.isAuthenticated {
-                // Step 2 — Sign in with Apple / Face ID
+                // Step 3 — Sign in with Apple / Face ID
                 LoginView()
             } else {
-                // Step 3 — straight into the app, no questionnaire
+                // Step 4 — straight into the app, no questionnaire
                 MainTabView()
             }
         }
         .animation(.easeInOut(duration: 0.35), value: appState.hasSeenIntro)
+        .animation(.easeInOut(duration: 0.35), value: appState.hasAcceptedTerms)
         .animation(.easeInOut(duration: 0.35), value: appState.isAuthenticated)
     }
 }

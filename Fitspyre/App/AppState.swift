@@ -19,6 +19,7 @@ final class AppState: ObservableObject {
     @Published var hasCompletedProfile:   Bool = false
     @Published var hasCompletedGoal:      Bool = false
     @Published var hasSeenIntro:          Bool = false   // ← NEW
+    @Published var hasAcceptedTerms:      Bool = false   // ← NEW (injury/medical disclaimer)
     @Published var selectedGoal:          FitnessGoal?
     @Published var userProfile:           UserProfile?
 
@@ -33,6 +34,7 @@ final class AppState: ObservableObject {
         hasCompletedProfile    = UserDefaults.standard.bool(forKey: "hasCompletedProfile")
         hasCompletedGoal       = UserDefaults.standard.bool(forKey: "hasCompletedGoal")
         hasSeenIntro           = UserDefaults.standard.bool(forKey: "hasSeenIntro")   // ← NEW
+        hasAcceptedTerms       = UserDefaults.standard.bool(forKey: "hasAcceptedTerms")   // ← NEW
         if let raw = UserDefaults.standard.string(forKey: "selectedGoal") {
             selectedGoal = FitnessGoal(rawValue: raw)
         }
@@ -68,6 +70,11 @@ final class AppState: ObservableObject {
     func markIntroSeen() {            // ← NEW
         hasSeenIntro = true
         UserDefaults.standard.set(true, forKey: "hasSeenIntro")
+    }
+
+    func markTermsAccepted() {        // ← NEW
+        hasAcceptedTerms = true
+        UserDefaults.standard.set(true, forKey: "hasAcceptedTerms")
     }
 
     func signOut() {

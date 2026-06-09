@@ -2736,6 +2736,11 @@ final class PushUpViewModel: NSObject, ObservableObject,
                 self.repsInCurrentSet += 1
                 self.totalRepsAllTime += 1
                 self.speakRepCount(self.repsInCurrentSet)
+                WatchConnectivityManager.shared.sendRepUpdate(
+                    exercise: "Push-Up", repsInSet: self.repsInCurrentSet,
+                    targetReps: self.targetReps, currentSet: self.currentSet,
+                    totalSets: self.targetSets, formScore: scoreSnapshot,
+                    feedback: scoreSnapshot >= 85 ? "Good form!" : "Keep it clean")
 
                 if self.targetReps > 0 && self.repsInCurrentSet >= self.targetReps {
                     if self.currentSet < self.targetSets {
@@ -4051,6 +4056,11 @@ final class LungeViewModel: NSObject, ObservableObject, AVCaptureVideoDataOutput
                         self.repsInCurrentSet += 1
                         self.totalRepsAllTime += 1
                         self.speakRepCount(self.repsInCurrentSet)
+                        WatchConnectivityManager.shared.sendRepUpdate(
+                            exercise: "Lunge", repsInSet: self.repsInCurrentSet,
+                            targetReps: self.targetReps, currentSet: self.currentSet,
+                            totalSets: self.targetSets, formScore: scoreSnapshot,
+                            feedback: scoreSnapshot >= 85 ? "Good form!" : "Keep it clean")
                         let record = LungeRepRecord(repNumber: self.totalRepsAllTime, score: scoreSnapshot, isGood: true, timestamp: Date())
                         self.repHistory.append(record)
                         self.updateScoreStats()
@@ -5253,6 +5263,11 @@ final class GluteBridgeViewModel: NSObject, ObservableObject,
                 self.repsInCurrentSet += 1
                 self.totalRepsAllTime += 1
                 self.speakRepCount(self.repsInCurrentSet)
+                WatchConnectivityManager.shared.sendRepUpdate(
+                    exercise: "Glute Bridge", repsInSet: self.repsInCurrentSet,
+                    targetReps: self.targetReps, currentSet: self.currentSet,
+                    totalSets: self.targetSets, formScore: scoreSnapshot,
+                    feedback: scoreSnapshot >= 85 ? "Good form!" : "Keep it clean")
 
                 if self.targetReps > 0 && self.repsInCurrentSet >= self.targetReps {
                     if self.currentSet < self.targetSets {
@@ -6809,6 +6824,11 @@ final class HighKneesViewModel: NSObject, ObservableObject,
                 self.repsInCurrentSet += 1
                 self.totalRepsAllTime += 1
                 self.speakRepCount(self.repsInCurrentSet)
+                WatchConnectivityManager.shared.sendRepUpdate(
+                    exercise: "High Knees", repsInSet: self.repsInCurrentSet,
+                    targetReps: self.targetReps, currentSet: self.currentSet,
+                    totalSets: self.targetSets, formScore: scoreSnapshot,
+                    feedback: scoreSnapshot >= 85 ? "Good form!" : "Keep it clean")
 
                 if self.targetReps > 0 && self.repsInCurrentSet >= self.targetReps {
                     if self.currentSet < self.targetSets {
@@ -8292,6 +8312,11 @@ final class SquatViewModel: NSObject, ObservableObject,
                 self.repsInCurrentSet += 1
                 self.totalRepsAllTime += 1
                 self.speakRepCount(self.repsInCurrentSet)
+                WatchConnectivityManager.shared.sendRepUpdate(
+                    exercise: "Squat", repsInSet: self.repsInCurrentSet,
+                    targetReps: self.targetReps, currentSet: self.currentSet,
+                    totalSets: self.targetSets, formScore: scoreSnapshot,
+                    feedback: scoreSnapshot >= 85 ? "Good form!" : "Keep it clean")
 
                 if self.targetReps > 0 && self.repsInCurrentSet >= self.targetReps {
                     if self.currentSet < self.targetSets {

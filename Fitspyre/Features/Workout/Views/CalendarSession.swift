@@ -25,6 +25,12 @@ enum DayStatus {
     case locked
     case upcoming
 }
+
+/// Wraps a Date so it can drive `.sheet(item:)`.
+struct IdentifiableDate: Identifiable {
+    let date: Date
+    var id: TimeInterval { date.timeIntervalSince1970 }
+}
 struct CalendarSession {
     let title:    String
     let duration: String
@@ -235,6 +241,7 @@ struct TrainingWorkoutsView: View {
 struct WeeklyCalendarView: View {
     @State private var selectedDate: Date = Date()
     @State private var displayMonth: Date = Date()
+    @State private var detailDate: Date? = nil          // ← drives the day detail sheet
     private let calendar = Calendar.current
 
     private var sessions: [String: CalendarSession] {
@@ -297,6 +304,12 @@ struct WeeklyCalendarView: View {
                 Spacer(minLength: 110)
             }
         }
+        .sheet(item: Binding(
+            get: { detailDate.map(IdentifiableDate.init) },
+            set: { detailDate = $0?.date }
+        )) { wrapper in
+            DayDetailSheet(date: wrapper.date, session: sessions[dateKey(wrapper.date)])
+        }
     }
 
     // ── Month navigator ───────────────────────────────────────────────────────
@@ -356,7 +369,10 @@ struct WeeklyCalendarView: View {
                         isSelected: calendar.isDate(date, inSameDayAs: selectedDate),
                         dotStatus:  sessions[dateKey(date)]?.status
                     )
-                    .onTapGesture { withAnimation { selectedDate = date } }
+                    .onTapGesture {
+                        withAnimation { selectedDate = date }
+                        detailDate = date
+                    }
                 }
             }
         }

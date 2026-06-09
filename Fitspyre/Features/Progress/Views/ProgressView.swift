@@ -23,6 +23,10 @@ struct FitProgressView: View {
     @ObservedObject private var history = WorkoutHistoryStore.shared
     @State private var selectedPeriod: StatPeriod = .week
 
+    @AppStorage("fitspire_streak")        private var streak        = 0
+    @AppStorage("fitspire_xp")            private var xp            = 0
+    @AppStorage("fitspire_totalWorkouts") private var totalWorkouts = 0
+
     var body: some View {
         NavigationStack {
             ZStack {
@@ -42,6 +46,10 @@ struct FitProgressView: View {
                         }
                         .padding(.horizontal, 24)
                         .padding(.top, 56)
+
+                        // Streak / momentum hero — always visible
+                        streakHeroCard
+                            .padding(.horizontal, 24)
 
                         // HealthKit section
                         if !HKHealthStore.isHealthDataAvailable() {
@@ -175,6 +183,49 @@ struct FitProgressView: View {
     }
 
     // ── Workout progress section ──────────────────────────────────────────────
+
+    private var streakHeroCard: some View {
+        HStack(spacing: 16) {
+            ZStack {
+                Circle()
+                    .fill(Color(hex: "D85A30").opacity(0.16))
+                    .frame(width: 58, height: 58)
+                Image(systemName: "flame.fill")
+                    .font(.system(size: 26))
+                    .foregroundStyle(Color(hex: "D85A30"))
+            }
+            VStack(alignment: .leading, spacing: 3) {
+                Text("\(streak)-day streak")
+                    .font(.system(size: 20, weight: .heavy, design: .rounded))
+                    .foregroundStyle(.white)
+                Text(streak > 0 ? "Keep the fire going — train today" : "Start today to begin a streak")
+                    .font(.system(size: 12))
+                    .foregroundStyle(Color.appT3)
+            }
+            Spacer()
+            VStack(alignment: .trailing, spacing: 3) {
+                Text("\(xp)")
+                    .font(.system(size: 18, weight: .heavy, design: .rounded))
+                    .foregroundStyle(Color.appCyan)
+                Text("XP")
+                    .font(.system(size: 9, weight: .bold))
+                    .foregroundStyle(Color.appT4)
+                    .tracking(1.2)
+            }
+        }
+        .padding(16)
+        .background(
+            ZStack {
+                RoundedRectangle(cornerRadius: 18)
+                    .fill(LinearGradient(colors: [Color(hex: "1E1206"), Color.appBG2],
+                                         startPoint: .topLeading, endPoint: .bottomTrailing))
+                RoundedRectangle(cornerRadius: 18)
+                    .stroke(LinearGradient(colors: [Color(hex: "D85A30").opacity(0.4), Color.clear],
+                                           startPoint: .topLeading, endPoint: .bottomTrailing),
+                            lineWidth: 1)
+            }
+        )
+    }
 
     private var workoutProgressSection: some View {
         VStack(alignment: .leading, spacing: 16) {

@@ -14,6 +14,7 @@
 
 
 import SwiftUI
+import AVFoundation
 
 struct HomeExerciseDemoView: View {
     let exercise: HomeExercise
@@ -373,6 +374,7 @@ struct HomeExerciseDemoView: View {
 struct ExerciseDemoAnimation: View {
     let exercise: HomeExercise
     @State private var hasVideo = false
+    @State private var pulse = false
 
     var body: some View {
         ZStack {
@@ -387,27 +389,54 @@ struct ExerciseDemoAnimation: View {
                 ExerciseVideoPlayerView(videoName: name)
                     .clipShape(RoundedRectangle(cornerRadius: 16))
             } else {
-                // ExerciseMotionView is in ExerciseAnimationSwiftUI.swift
-                // If that file is added to the project, full animations play.
-                // Otherwise this safe fallback shows the exercise icon.
+                // Animated fallback — used whenever a real demo video isn't bundled.
                 ZStack {
                     Circle()
-                        .fill(Color.appLime.opacity(0.1))
-                        .frame(width: 100, height: 100)
+                        .fill(Color.appLime.opacity(0.10))
+                        .frame(width: 120, height: 120)
+                        .scaleEffect(pulse ? 1.08 : 0.92)
+                    Circle()
+                        .stroke(Color.appCyan.opacity(0.25), lineWidth: 2)
+                        .frame(width: 120, height: 120)
+                        .scaleEffect(pulse ? 1.15 : 0.95)
+                        .opacity(pulse ? 0 : 0.8)
                     Image(systemName: exercise.icon)
-                        .font(.system(size: 44, weight: .medium))
+                        .font(.system(size: 46, weight: .medium))
                         .foregroundStyle(
                             LinearGradient(colors: [Color.appLime, Color.appCyan],
                                            startPoint: .top, endPoint: .bottom)
                         )
                 }
+                .onAppear {
+                    withAnimation(.easeInOut(duration: 1.4).repeatForever(autoreverses: true)) {
+                        pulse = true
+                    }
+                }
             }
         }
-        .onAppear {
-            if let name = exercise.videoFileName,
-               Bundle.main.url(forResource: name, withExtension: "mp4") != nil {
-                hasVideo = true
-            }
+        .onAppear { validateVideo() }
+    }
+
+    /// Only switch to video playback if the bundled asset is a real, playable file.
+    /// (Placeholder 0-byte files would otherwise render a black card.)
+    private func validateVideo() {
+        guard let name = exercise.videoFileName,
+              let url = Bundle.main.url(forResource: name, withExtension: "mp4") else {
+            hasVideo = false
+            return
+        }
+        // Reject empty / tiny placeholder files quickly.
+        if let size = try? FileManager.default
+            .attributesOfItem(atPath: url.path)[.size] as? Int, size < 1_024 {
+            hasVideo = false
+            return
+        }
+        // Confirm the asset actually has a playable video track.
+        let asset = AVURLAsset(url: url)
+        Task {
+            let playable = (try? await asset.load(.isPlayable)) ?? false
+            let duration = (try? await asset.load(.duration).seconds) ?? 0
+            await MainActor.run { hasVideo = playable && duration > 0.1 }
         }
     }
 }

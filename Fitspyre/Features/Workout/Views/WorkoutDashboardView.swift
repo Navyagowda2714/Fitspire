@@ -1,6 +1,8 @@
 
 
 import SwiftUI
+import UserNotifications
+import UIKit
 
 struct WorkoutDashboardView: View {
     @EnvironmentObject var appState: AppState
@@ -14,6 +16,8 @@ struct WorkoutDashboardView: View {
     @State private var cameraHomeExercise: HomeExercise? = nil
     // Drives the AIFormCheckIntroView (shown between demo and camera)
     @State private var introExercise: HomeExercise? = nil
+    // Notification permission state for the bell button
+    @State private var notificationsOn = false
 
     private var exercises: [HomeExercise] {
         guard let cat = selectedCategory else {
@@ -40,11 +44,24 @@ struct WorkoutDashboardView: View {
                                     .font(.system(size: 28, weight: .heavy)).foregroundStyle(.white)
                             }
                             Spacer()
-                            ZStack {
-                                Circle().fill(Color.appBG2).frame(width: 42, height: 42)
-                                Image(systemName: "bell.fill")
-                                    .font(.system(size: 16)).foregroundStyle(Color.appLime)
+                            Button {
+                                handleBellTap()
+                            } label: {
+                                ZStack(alignment: .topTrailing) {
+                                    Circle().fill(Color.appBG2).frame(width: 42, height: 42)
+                                    Image(systemName: notificationsOn ? "bell.fill" : "bell.slash.fill")
+                                        .font(.system(size: 16))
+                                        .foregroundStyle(notificationsOn ? Color.appLime : Color.appT3)
+                                        .frame(width: 42, height: 42)
+                                    if notificationsOn {
+                                        Circle().fill(Color.appGood)
+                                            .frame(width: 9, height: 9)
+                                            .overlay(Circle().stroke(Color.appBG, lineWidth: 2))
+                                            .offset(x: 2, y: -2)
+                                    }
+                                }
                             }
+                            .buttonStyle(.plain)
                         }
                         .padding(.horizontal, 24).padding(.top, 16)
 
@@ -142,6 +159,7 @@ struct WorkoutDashboardView: View {
                 }
             }
             .navigationTitle("").navigationBarHidden(true)
+            .onAppear { refreshNotificationState() }
 
             // ── Demo sheet: item-based — exercise is GUARANTEED non-nil ────────
             // (isPresented: caused a race condition → exercise set AFTER cover opened → black screen)
@@ -183,6 +201,46 @@ struct WorkoutDashboardView: View {
                 }
             }
 
+        }
+    }
+
+    // Tapping the bell: enable reminders, or route to Settings if previously denied.
+    private func handleBellTap() {
+        let center = UNUserNotificationCenter.current()
+        center.getNotificationSettings { settings in
+            DispatchQueue.main.async {
+                switch settings.authorizationStatus {
+                case .notDetermined:
+                    Task {
+                        let granted = await FitNotificationManager.shared.requestAuthorization()
+                        await MainActor.run { self.notificationsOn = granted }
+                    }
+                case .denied:
+                    // Already denied — only Settings can re-enable.
+                    if let url = URL(string: UIApplication.openSettingsURLString) {
+                        UIApplication.shared.open(url)
+                    }
+                case .authorized, .provisional, .ephemeral:
+                    // Toggle our reminder schedule on/off.
+                    self.notificationsOn.toggle()
+                    if self.notificationsOn {
+                        FitNotificationManager.shared.isAuthorized = true
+                        FitNotificationManager.shared.scheduleAll()
+                    } else {
+                        FitNotificationManager.shared.cancelAll()
+                    }
+                @unknown default:
+                    break
+                }
+            }
+        }
+    }
+
+    private func refreshNotificationState() {
+        UNUserNotificationCenter.current().getNotificationSettings { settings in
+            DispatchQueue.main.async {
+                self.notificationsOn = settings.authorizationStatus == .authorized
+            }
         }
     }
 
