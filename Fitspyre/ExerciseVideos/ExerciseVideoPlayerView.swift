@@ -1,20 +1,14 @@
 //
 //  ExerciseVideoPlayerView.swift
-//  FitnessAI
+//  Praxio
 //
-//  Created by Navyashree Byregowda on 17/05/2026.
-//
-
 
 import SwiftUI
 import AVFoundation
 import AVKit
 
-// MARK: - Seamless looping video player
-
 struct ExerciseVideoPlayerView: UIViewRepresentable {
-    let videoName: String   // filename without extension, e.g. "plank"
-    var showsControls: Bool = false
+    let videoName: String
 
     func makeUIView(context: Context) -> LoopingPlayerView {
         let view = LoopingPlayerView()
@@ -29,8 +23,6 @@ struct ExerciseVideoPlayerView: UIViewRepresentable {
     }
 }
 
-// MARK: - UIView subclass that owns the player and looper
-
 final class LoopingPlayerView: UIView {
     private var player:      AVQueuePlayer?
     private var looper:      AVPlayerLooper?
@@ -44,34 +36,30 @@ final class LoopingPlayerView: UIView {
 
     func load(videoNamed name: String) {
         guard let url = Bundle.main.url(forResource: name, withExtension: "mp4") else {
-            print("⚠️ ExerciseVideo: '\(name).mp4' not found in bundle — using fallback animation")
+            print("⚠️ ExerciseVideo: '\(name).mp4' not found in bundle")
             return
         }
-
         currentVideoName = name
-
-        // Tear down previous player
         looper?.disableLooping()
         player?.pause()
         playerLayer?.removeFromSuperlayer()
 
-        // Build new looping player
-        let item   = AVPlayerItem(url: url)
-        let qp     = AVQueuePlayer(playerItem: item)
-        let loop   = AVPlayerLooper(player: qp, templateItem: item)
+        let item = AVPlayerItem(url: url)
+        let qp   = AVQueuePlayer(playerItem: item)
+        let loop = AVPlayerLooper(player: qp, templateItem: item)
 
-        qp.isMuted = true   // silent demo — no audio needed
+        qp.isMuted = false
         qp.play()
 
-        let layer            = AVPlayerLayer(player: qp)
-        layer.videoGravity   = .resizeAspect   // letterbox — keep proportions
-        layer.frame          = bounds
+        let layer             = AVPlayerLayer(player: qp)
+        layer.videoGravity    = .resizeAspect
+        layer.frame           = bounds
         layer.backgroundColor = UIColor.clear.cgColor
 
         self.layer.insertSublayer(layer, at: 0)
-        playerLayer   = layer
-        player        = qp
-        looper        = loop
+        playerLayer = layer
+        player      = qp
+        looper      = loop
     }
 
     deinit {
@@ -79,8 +67,6 @@ final class LoopingPlayerView: UIView {
         player?.pause()
     }
 }
-
-// MARK: - Exercise → video filename mapping
 
 extension HomeExercise {
     var videoFileName: String? {
@@ -99,3 +85,4 @@ extension HomeExercise {
         }
     }
 }
+

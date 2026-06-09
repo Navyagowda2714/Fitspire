@@ -2,60 +2,46 @@
 //  AIFormCheckIntroView.swift
 //  Praxio
 //
-//  Created by Navyashree Byregowda on 25/05/2026.
-//
-
-
-//  Current state: blank dark screen with a Continue button.
-//  Hand this file to your designer/developer to build out the UI.
-//
-//  HOW IT FITS IN THE FLOW:
-//  HomeExerciseDemoView  →  AIFormCheckIntroView  →  ExerciseLiveView (camera)
-//
 
 import SwiftUI
 
 struct AIFormCheckIntroView: View {
 
-    // The exercise the user selected — use this to show exercise-specific tips
     let exercise: HomeExercise
-
-    // Call this when the user is ready to proceed to the live camera
     let onContinue: () -> Void
 
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         ZStack {
-
-            // ── Background ────────────────────────────────────────────────
             Color.appBG.ignoresSafeArea()
 
-            // ── DESIGN GOES HERE ──────────────────────────────────────────
-            //
-            //  This is the blank canvas. Add your UI between here and the
-            //  Continue button below. Ideas:
-            //
-            //  • Camera setup tips ("Stand 2m from phone")
-            //  • Exercise-specific cues (exercise.name, exercise.formCues)
-            //  • Animated countdown (3...2...1)
-            //  • Camera permission explanation
-            //  • Position guide overlay / illustration
-            //
             VStack {
                 Spacer()
 
-                // Placeholder label — replace with your design
-                Text("Design screen here")
-                    .font(.title2)
-                    .foregroundStyle(Color.appT3)
+                if let fileName = exercise.videoFileName {
+                    ExerciseVideoPlayerView(videoName: fileName)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 680)
+                        .clipped()
+                        /*.clipShape(RoundedRectangle(cornerRadius: 20))
+                        .padding(.horizontal, 24)*/
+                } else {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 20)
+                            .fill(Color.white.opacity(0.05))
+                        Image(systemName: "play.circle")
+                            .font(.system(size: 56, weight: .light))
+                            .foregroundStyle(Color.appT3)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 680)
+                    /*.padding(.horizontal, 24)*/
+                }
 
                 Spacer()
             }
-            // ── END DESIGN AREA ───────────────────────────────────────────
         }
-
-        // ── Continue button (keep at bottom) ─────────────────────────────
         .overlay(alignment: .bottom) {
             VStack(spacing: 12) {
                 Button(action: onContinue) {
@@ -89,3 +75,4 @@ struct AIFormCheckIntroView: View {
         .preferredColorScheme(.dark)
     }
 }
+
